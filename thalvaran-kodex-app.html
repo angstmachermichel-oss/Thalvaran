@@ -469,23 +469,9 @@ const FUSIONS = [
 // Fallback: window.storage existiert nur innerhalb einer echten Claude-Artifact-Umgebung.
 // Für Standalone-Nutzung (eigenes Hosting, lokale Vorschau) weicht dies auf einen
 // simplen In-Memory-Speicher aus, damit die App überall lauffähig bleibt.
-const _memStore = {};
+const _memStore = {}; const GAMESTATE_ENDPOINT = "https://script.google.com/macros/s/AKfycbzQkYXCCMGs04WUgHgfiw4WI3c07UNEBEOIb4JHbm02ovmpjWGG1EuO1q1hTWJxbZcf/exec"; let _gsCache=null; async function _gsLoadAll(){ try{ const r=await fetch(GAMESTATE_ENDPOINT+'?gsAction=getAll'); _gsCache=await r.json(); }catch(e){ _gsCache=_gsCache||{}; } }
 function _hasRealStorage(){ return typeof window!=='undefined' && window.storage && typeof window.storage.get==='function'; }
-async function sGet(k,sh){
-  if(_hasRealStorage()){
-    try{ const r=await window.storage.get(k,sh); return r?JSON.parse(r.value):null; }catch(e){ /* fällt durch auf Memory */ }
-  }
-  const mk=(sh?'shared:':'priv:')+k;
-  return Object.prototype.hasOwnProperty.call(_memStore,mk) ? JSON.parse(_memStore[mk]) : null;
-}
-async function sSet(k,v,sh){
-  if(_hasRealStorage()){
-    try{ await window.storage.set(k,JSON.stringify(v),sh); return; }catch(e){ /* fällt durch auf Memory */ }
-  }
-  const mk=(sh?'shared:':'priv:')+k;
-  _memStore[mk]=JSON.stringify(v);
-}
-function uid(){ return Math.random().toString(36).slice(2,10); }
+async function sGet(k,sh){ if(_hasRealStorage()){ try{ const r=await window.storage.get(k,sh); return r?JSON.parse(r.value):null; }catch(e){} } if(sh){ if(!_gsCache) await _gsLoadAll(); return (_gsCache&&Object.prototype.hasOwnProperty.call(_gsCache,k))?_gsCache[k]:null; } try{ const raw=localStorage.getItem('priv:'+k); return raw?JSON.parse(raw):null; }catch(e){ return null; } } async function sSet(k,v,sh){ if(_hasRealStorage()){ try{ await window.storage.set(k,JSON.stringify(v),sh); return; }catch(e){} } if(sh){ if(!_gsCache) _gsCache={}; _gsCache[k]=v; try{ await fetch(GAMESTATE_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({gsAction:'set',key:k,value:v})}); }catch(e){} return; } try{ localStorage.setItem('priv:'+k, JSON.stringify(v)); }catch(e){} }function uid(){ return Math.random().toString(36).slice(2,10); }
 function emptyKodex(){ const k={}; CATEGORIES.forEach(c=>k[c.id]={accepted:[],fusedWith:null}); return k; }
 
 let state = {
@@ -508,7 +494,7 @@ async function loadShared(suppressRenderWhileTyping){
   await loadSharedDataOnly();
   render();
 }
-async function loadSharedDataOnly(){
+async function loadSharedDataOnly(){ _gsCache=null; await _gsLoadAll();
   const reserve = await sGet('reserve', true);
   const events = await sGet('events', true);
   const guests = await sGet('guests', true);
@@ -594,8 +580,7 @@ function starterHand(code){
   return hand;
 }
 async function registerGuest(){
-  const guests=(await sGet('guests',true))||{};
-  guests[state.identity.guestId] = {name:state.identity.name, tribe:state.identity.tribe, archetype:state.identity.archetype};
+  const guests=(await sGet('guests',true))||{}; const _existingGuest=guests[state.identity.guestId]; const tradeCode=(_existingGuest&&_existingGuest.tradeCode)?_existingGuest.tradeCode:(Math.random().toString(36).slice(2,8).toUpperCase()); state.identity.tradeCode=tradeCode; guests[state.identity.guestId] = {name:state.identity.name, tribe:state.identity.tribe, archetype:state.identity.archetype, tradeCode:tradeCode};
   await sSet('guests', guests, true);
   const economy=(await sGet('economy',true))||{};
   if(!economy[state.identity.guestId]) economy[state.identity.guestId] = starterEconomy(state.identity.guestId);
@@ -862,7 +847,7 @@ function tabHandel(){
       <div class="eyebrow">Dein Empfangs-Code</div>
       <div class="small" style="margin-bottom:8px">Zeig das jemandem, der dir etwas schicken will — wie ein Zahl-Code.</div>
       <div style="display:flex;justify-content:center;margin-bottom:8px"><canvas id="myQrCanvas" width="180" height="180"></canvas></div>
-      <div class="small" style="text-align:center;font-family:var(--mono);letter-spacing:.1em">${state.identity.guestId}</div>
+      <div class="small" style="text-align:center;font-family:var(--mono);letter-spacing:.1em">${state.identity.tradeCode}</div>
     </div>
     <div class="card">
       <div class="eyebrow">Jemandem etwas schicken</div>
@@ -893,7 +878,7 @@ function tabHandel(){
 function renderTradeQR(){
   const canvas = document.getElementById('myQrCanvas');
   if(canvas && typeof QRCode !== 'undefined'){
-    QRCode.toCanvas(canvas, state.identity.guestId, {width:180, margin:1, color:{dark:'#0b0e10', light:'#e9e3d6'}}, function(err){ if(err) console.warn('QR-Fehler', err); });
+    QRCode.toCanvas(canvas, state.identity.tradeCode, {width:180, margin:1, color:{dark:'#0b0e10', light:'#e9e3d6'}}, function(err){ if(err) console.warn('QR-Fehler', err); });
   }
 }
 
@@ -929,17 +914,7 @@ function stopScan(){
   state.tradeScanning = false;
   if(state._scanStream){ state._scanStream.getTracks().forEach(t=>t.stop()); state._scanStream = null; }
 }
-function resolveTarget(code){
-  stopScan();
-  if(code === state.identity.guestId){ state.tradeError = 'Du kannst dir selbst nichts schicken.'; render(); return; }
-  const g = state.guests[code];
-  if(!g){ state.tradeError = 'Code nicht erkannt — Person hat sich evtl. noch nicht eingeloggt.'; render(); return; }
-  state.tradeTarget = code;
-  state.tradeTargetName = g.name;
-  state.tradeError = null;
-  render();
-}
-async function sendResourcesTo(){
+function resolveTarget(code){ stopScan(); if(code===state.identity.tradeCode){ state.tradeError='Du kannst dir selbst nichts schicken.'; render(); return; } const _entry=Object.entries(state.guests||{}).find(function(e){ return e[1] && e[1].tradeCode===code; }); if(!_entry){ state.tradeError='Code nicht erkannt — Person hat sich evtl. noch nicht eingeloggt.'; render(); return; } state.tradeTarget=_entry[0]; state.tradeTargetName=_entry[1].name; state.tradeError=null; render(); }async function sendResourcesTo(){
   const glutAmt = parseInt(document.getElementById('sendGlut').value)||0;
   const markenAmt = parseInt(document.getElementById('sendMarken').value)||0;
   if(glutAmt<=0 && markenAmt<=0) return;
