@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Thalvaràn — Dein Zugang</title>
+<style>
+:root{
+  --ink:#080d10; --ink-2:#0d161a; --frost:#16242a; --frost-2:#1d2f35;
+  --bone:#e9e3d6; --bone-dim:#a4aba8;
+  --aurora:#63c6a3; --ember:#e7a44a; --blood:#b5493f;
+  --accent: var(--ember);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --maxw:720px;
+  --ease:cubic-bezier(.22,.7,.32,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--serif);
+  font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(120% 90% at 50% 8%,transparent 55%,rgba(0,0,0,.5) 100%);
+  mix-blend-mode:multiply}
+h1,h2,h3{font-weight:400;margin:0 0 .4em}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+a{color:var(--accent)}
+.label b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-dim);margin-bottom:3px}
+.label{margin:0 0 14px}
+
+/* ===== GATE ===== */
+#gate{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:40px 22px;position:relative;z-index:2}
+.gatebox{max-width:380px;width:100%;text-align:center}
+.sigil{width:54px;height:54px;margin:0 auto 20px}
+.sigil svg{width:100%;height:100%}
+.sigil .r{fill:none;stroke:var(--aurora);stroke-width:1.4}
+.sigil .c{fill:var(--aurora)}
+.gatebox h1{font-size:26px;letter-spacing:.02em}
+.gatebox .sub{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-dim);margin:6px 0 30px}
+#codeInput{width:100%;background:var(--ink-2);border:1px solid var(--frost-2);border-radius:8px;
+  color:var(--bone);font-family:var(--mono);font-size:18px;letter-spacing:.14em;text-align:center;
+  text-transform:uppercase;padding:15px 12px;outline:none}
+#codeInput:focus{border-color:var(--accent)}
+#gateBtn{margin-top:14px;width:100%;padding:14px;border-radius:8px;border:1px solid var(--accent);
+  background:transparent;color:var(--accent);font-family:var(--mono);font-size:13px;letter-spacing:.1em;
+  text-transform:uppercase;cursor:pointer;transition:.2s}
+#gateBtn:hover{background:var(--accent);color:#08110d}
+#gateErr{min-height:20px;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--blood)}
+.gatehint{margin-top:26px;font-size:14px;color:var(--bone-dim)}
+
+/* ===== APP ===== */
+#app{display:none}
+#app.on{display:block}
+header.bar{position:sticky;top:0;z-index:10;background:color-mix(in oklab,var(--ink),#000 28%);
+  border-bottom:1px solid var(--frost);backdrop-filter:blur(8px);padding:12px 0}
+header.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.who{font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--bone-dim)}
+.who b{color:var(--bone)}
+#logout{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--bone-dim);background:transparent;border:1px solid var(--frost-2);border-radius:16px;
+  padding:6px 12px;cursor:pointer}
+#logout:hover{color:var(--bone)}
+
+nav.tabs{position:sticky;top:45px;z-index:9;background:var(--ink);border-bottom:1px solid var(--frost);
+  overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+nav.tabs .wrap{display:flex;gap:6px;padding:10px 22px}
+nav.tabs button{flex:0 0 auto;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--bone-dim);background:transparent;border:1px solid var(--frost-2);border-radius:20px;
+  padding:8px 13px;cursor:pointer;transition:.2s}
+nav.tabs button[aria-current="true"]{color:#08110d;background:var(--accent);border-color:var(--accent)}
+
+section.view{display:none;padding:34px 0 70px}
+section.view.on{display:block}
+.card{border:1px solid var(--frost);border-radius:10px;background:rgba(255,255,255,.014);padding:20px 20px;margin-bottom:16px}
+.card.tint{border-top:2px solid var(--tc,var(--accent))}
+blockquote{border-left:2px solid var(--accent);margin:14px 0;padding:2px 0 2px 16px;font-style:italic;color:var(--bone)}
+ul{padding-left:20px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.05em;border:1px solid var(--frost-2);
+  border-radius:14px;padding:5px 11px;color:var(--bone-dim)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.grid2{grid-template-columns:1fr}}
+.seal{border:1px dashed color-mix(in oklab,var(--blood),var(--frost) 40%);border-radius:10px;
+  padding:16px 18px;background:rgba(181,73,63,.05);margin-top:6px}
+.seal .eyebrow{color:var(--blood)}
+.romanlink{display:inline-block;margin-top:6px;padding:12px 18px;border:1px solid var(--accent);
+  border-radius:8px;text-decoration:none;font-family:var(--mono);font-size:12px;letter-spacing:.06em;
+  text-transform:uppercase}
+.romanlink:hover{background:var(--accent);color:#08110d}
+.warn{font-size:14px;color:var(--bone-dim);border-top:1px solid var(--frost);padding-top:14px;margin-top:22px}
+</style>
+</head>
+<body>
+
+<!-- ============ GATE ============ -->
+<div id="gate">
+  <div class="gatebox">
+    <div class="sigil"><svg viewBox="0 0 100 100"><circle class="r" cx="50" cy="50" r="42"/><circle class="c" cx="50" cy="50" r="6"/></svg></div>
+    <h1>Thalvaràn</h1>
+    <div class="sub">Persönlicher Zugang</div>
+    <input id="codeInput" type="text" placeholder="DEIN CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button id="gateBtn">Zugang öffnen</button>
+    <div id="gateErr"></div>
+    <p class="gatehint">Deinen Code findest du auf deiner Einladung. Bitte gib ihn nicht weiter — er zeigt dir Dinge, die nur du wissen sollst.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <header class="bar">
+    <div class="wrap">
+      <div class="who">Willkommen, <b id="whoName">—</b> <span id="whoTribe"></span></div>
+      <button id="logout">Abmelden</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <div class="wrap">
+      <button data-v="dossier" aria-current="true">Dein Dossier</button>
+      <button data-v="abend">Der Abend</button>
+      <button data-v="mechanik">Mechanismen</button>
+      <button data-v="kostuem">Kostüm</button>
+      <button data-v="roman">Der Roman</button>
+    </div>
+  </nav>
+
+  <main class="wrap">
+
+    <!-- DOSSIER (personalisiert) -->
+    <section class="view on" id="v-dossier">
+      <p class="eyebrow">Dein Dossier</p>
+      <h2 id="dName">—</h2>
+      <p class="sub" id="dHead" style="color:var(--bone-dim);font-family:var(--mono);font-size:12px;letter-spacing:.06em;margin-top:-8px"></p>
+      <blockquote id="dMotto"></blockquote>
+
+      <div class="grid2">
+        <div class="card tint" id="dStrengthsCard">
+          <p class="label"><b>Stärken</b></p>
+          <ul id="dStrengths"></ul>
+        </div>
+        <div class="card tint" id="dWeaknessCard">
+          <p class="label"><b>Schwächen</b></p>
+          <ul id="dWeaknesses"></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="label"><b>Gegenstände</b></p>
+        <ul id="dItems"></ul>
+      </div>
+
+      <div class="card">
+        <p class="label"><b>Startökonomie</b></p>
+        <div class="chips" id="dEconomy"></div>
+      </div>
+
+      <div class="card">
+        <p class="label"><b>Deine Ziele</b></p>
+        <p class="label"><b>Persönlich</b><span id="dGoalPersonal"></span></p>
+        <p class="label"><b>Stamm</b><span id="dGoalTribe"></span></p>
+      </div>
+
+      <div class="seal">
+        <p class="eyebrow">Versiegelt — nur für dich</p>
+        <p class="label"><b>Geheime Zugehörigkeit / Ziel</b><span id="dGoalSecret"></span></p>
+        <p class="label"><b>Dein Geheimnis</b><span id="dSecretInfo"></span></p>
+      </div>
+
+      <div class="card">
+        <p class="label"><b>Deine Starthand — Fähigkeitskarten</b></p>
+        <ul id="dCards"></ul>
+      </div>
+
+      <p class="warn">Dieses Dossier ist nur für dich bestimmt. Sprich mit anderen über eure Ziele nur, wenn <i>du</i> das im Spiel entscheidest — nicht vorher.</p>
+    </section>
+
+    <!-- DER ABEND -->
+    <section class="view" id="v-abend">
+      <p class="eyebrow">Alle Gäste</p>
+      <h2>Der Abend im Überblick</h2>
+      <div class="card">
+        <p class="label"><b>Format</b>Immersives Krimi-Dinner im Roaming-Stil — kein festes Sitzen, die Handlung verteilt sich über mehrere Räume.</p>
+        <p class="label"><b>Dauer</b>Etwa vier bis fünf Stunden, gegliedert in sechs Akte.</p>
+        <p class="label"><b>Verpflegung</b>Ein durchgehendes Buffet, offen über den ganzen Abend.</p>
+        <p class="label"><b>Ton</b>Drama, getragen von Humor — ernst genug zum Mitfiebern, leicht genug zum Lachen.</p>
+      </div>
+      <div class="card">
+        <p class="label"><b>Worum es geht</b>Die Reserve — die Lebenskraft Thalvaràns — sinkt. Nur wenn alle vier Erwachensschritte gleichzeitig stehen, bevor sie auf 0 % fällt, erwacht die Stadt. Eine geheime Zelle, <b>Die Asche</b>, arbeitet dagegen.</p>
+        <p class="label"><b>Der Kodex-Auftrag</b>Herzstück des Abends: Die sieben Stämme müssen gemeinsam den Kodex von Thalvaràn aus überlieferten Fragmenten zusammensetzen — jeder Satz muss von allen sieben getragen werden können. Manche Fragmente liegen in Dossiers, andere sind im Raum versteckt.</p>
+        <p class="label"><b>Dein Beitrag</b>Ob du auf Wahrheit, Verhandlung, Bluff oder stilles Beobachten setzt — beides trägt zum gemeinsamen Ausgang bei.</p>
+      </div>
+      <div class="card">
+        <p class="label"><b>Das Spiel läuft durch</b>Es gibt keine Auszeit außerhalb der Rolle — auch am Buffet bist du deine Figur. Das Buffet ist Teil der Handlung, nicht Pause davon.</p>
+      </div>
+    </section>
+
+    <!-- MECHANIK -->
+    <section class="view" id="v-mechanik">
+      <p class="eyebrow">Wie das Spiel funktioniert</p>
+      <h2>Mechanismen</h2>
+      <div class="card">
+        <p class="label"><b>Glut</b>Die universelle Währung des Abends. Wer Glut hat, hat Spielraum — sie fließt durch Verhandlung, Tausch und Aktionen.</p>
+        <p class="label"><b>Marken</b>Funktionale Tokens. Sie schalten bestimmte Fähigkeiten und Aktionen frei und sind nicht beliebig austauschbar.</p>
+        <p class="label"><b>Schlussvotum</b>Am Ende des Abends münden Glut und Marken in eine kollektive Abstimmung, die über Erwachen oder Verfall mitentscheidet.</p>
+      </div>
+      <div class="card">
+        <p class="label"><b>Fähigkeitskarten</b>Jede Rolle startet mit einer kleinen Hand an Karten (Typen wie Macht, Wissen, Klang, List, Bindung, Schild). Karten kosten nichts oder Marken und lösen einen konkreten Effekt aus.</p>
+      </div>
+      <div class="card">
+        <p class="label"><b>Das Buffet-Embargo</b>Die Vallari haben Hoheit über das Buffet. Einzelnen Stämmen kann das Begehrenswerte — nicht die Grundversorgung — vorübergehend verwehrt werden, bis ein Kompromiss steht. Es gibt immer einen Weg zurück.</p>
+      </div>
+      <div class="card">
+        <p class="label"><b>Die vier Erwachensschritte</b></p>
+        <ul>
+          <li>Der Ferroniten-Kreis</li>
+          <li>Die Axiomaten-Folge</li>
+          <li>Die Myrrhiden-Töne</li>
+          <li>Das Mor'Yen-Tor</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- KOSTÜM -->
+    <section class="view" id="v-kostuem">
+      <p class="eyebrow">Auftritt</p>
+      <h2>Kostüm-Hinweise</h2>
+      <div class="card">
+        <p class="label">Kostüm ist Pflicht — kein Zusatz, sondern Teil deines Auftritts. Je mehr Mühe, desto besser: Wer sichtbar in seine Rolle investiert hat, trägt den ganzen Abend. Die Hinweise unten sind Richtwerte für Farbe und Haltung, keine starre Vorschrift — mach daraus, was zu dir passt, aber geh damit ruhig weit. Deine Rolle bekommst du rund zwei Wochen vorher, das reicht zum Ausstatten.</p>
+      </div>
+      <div id="tribeCostumes"></div>
+    </section>
+
+    <!-- ROMAN -->
+    <section class="view" id="v-roman">
+      <p class="eyebrow">Vorgeschichte</p>
+      <h2>Der Roman</h2>
+      <div class="card">
+        <p class="label">Die Vorgeschichte Thalvaràns — wie die Welt zerbrach und wie diese sieben Stämme entstanden — ist als eigenes Scrollytelling aufbereitet. Nicht Pflichtlektüre, aber sie gibt Tiefe für dein Spiel.</p>
+        <a class="romanlink" href="roman.html" target="_blank" rel="noopener">Roman öffnen →</a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   DATENSTRUKTUR — hier werden alle Rollen eingetragen.
+   Code = eindeutiger, einfacher Zugangscode pro Gast (Kleinbuchstaben egal, wird normalisiert).
+   Diese Datei prüft den Code nur clientseitig — kein echter Schutz vor gezieltem
+   Angriff, aber genug, um zufällige Blicke fernzuhalten (wie besprochen: Ehrlichkeits-Modell).
+
+   Um eine neue Rolle zu ergänzen: Block kopieren, Felder ausfüllen, Code vergeben.
+   ============================================================ */
+
+var TRIBE_COLOR = {
+  ferroniten:"#7FA0B5", vallari:"#7E9B6B", moryen:"#9285B0",
+  axiomaten:"#5CB6C2", klingen:"#C79A5B", myrrhiden:"#A9B0C4", solari:"#D9A441"
+};
+var TRIBE_NAME = {
+  ferroniten:"Ferroniten", vallari:"Vallari", moryen:"Mor'Yen",
+  axiomaten:"Axiomaten", klingen:"Klingen von Rhûn", myrrhiden:"Myrrhiden", solari:"Solari"
+};
+
+var PLAYERS = {
+  "XDA2JH": {
+    name:"Soran Glanz", tribe:"myrrhiden", archetype:"Ringführer der Asche",
+    motto:"Vertrauenswürdige Fassade — niemand verdächtigt ihn zuerst",
+    strengths:["Vertrauenswürdige Fassade — niemand verdächtigt ihn zuerst","Kennt die Wege der Asche in allen sieben Stämmen","Ruhig unter Druck, auch in die Enge getrieben"],
+    weaknesses:["Muss die Kreiswächterin und den Mord verschleiern","Zwei versiegelte Loyalitäten, die ihn zerreißen können"],
+    items:["Ein zweites, verborgenes Zeichen der Asche"],
+    economy:{gluc:"gering", marken:"mittel"},
+    goalPersonal:"Unentdeckt durch den Abend kommen.",
+    goalTribe:"Als loyaler Myrrhide erscheinen, der dem Stamm dient.",
+    goalSecret:"Ringführer der Asche: das Erwachen um jeden Preis verhindern — die Kreiswächterin zum Schweigen gebracht haben und den Mord in Akt III begangen haben.",
+    secretInfo:"Er ist der Mörder des Abends. Diese Information ist der Kern des Krimis.",
+    cards:[]
+  },
+  "HE2DY2": {
+    name:"Sela vom dritten Ton", tribe:"myrrhiden", archetype:"Hütende",
+    motto:"Trägt einen der drei Töne — ohne sie bleibt das Tor stumm",
+    strengths:["Trägt einen der drei Töne — ohne sie bleibt das Tor stumm","Wird unterschätzt, weil sie kein Stimmrecht hat","Hört, was andere im Lärm überhören"],
+    weaknesses:["Ohne Mira und Nael kann sie allein nichts bewirken","Ihr Ton ist wertvoll — das macht sie zum Ziel"],
+    items:["Ein Solarfunkgerät, seit fünf Generationen weitergereicht"],
+    economy:{gluc:"mittel", marken:"gering"},
+    goalPersonal:"Den eigenen Ton beschützen, bis der richtige Moment kommt.",
+    goalTribe:"Den Myrrhiden-Weg der Stille und des Erinnerns wahren.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "7UCVQB": {
+    name:"Garran Eisenwort", tribe:"ferroniten", archetype:"Älteste",
+    motto:"Pflichtbewusst und verlässlich",
+    strengths:["Pflichtbewusst und verlässlich","Lässt sich nicht einschüchtern"],
+    weaknesses:["Misstraut allem, das sich nicht messen lässt"],
+    items:["Der Siegelring des Kreises"],
+    economy:{gluc:"mittel", marken:"hoch"},
+    goalPersonal:"Den Kreis unbeschadet durch den Abend führen.",
+    goalTribe:"Die institutionelle Macht der Ferroniten sichern.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "ACGHTW": {
+    name:"Iden Var", tribe:"axiomaten", archetype:"Stimme/Sehende",
+    motto:"Kennt zwei Glieder der Axiomaten-Folge",
+    strengths:["Kennt zwei Glieder der Axiomaten-Folge","Sieht den wahren Reservewert"],
+    weaknesses:["Ihr Wissen macht sie zum ersten Verhörziel","Wirkt schnell überheblich gegenüber anderen Stämmen"],
+    items:["Eine Tafel mit unvollständigen Reihen"],
+    economy:{gluc:"mittel", marken:"hoch"},
+    goalPersonal:"Die Wahrheit der Reserve nicht vorschnell preisgeben.",
+    goalTribe:"Die Axiomaten-Folge korrekt vervollständigen helfen.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "AUGZXZ": {
+    name:"Rasp Kettling", tribe:"ferroniten", archetype:"Stimme/Sehende",
+    motto:"Beobachtend und technisch versiert",
+    strengths:["Beobachtend und technisch versiert","Merkt sich jedes strukturelle Detail"],
+    weaknesses:["Spricht lieber in Diagrammen als in Gefühlen"],
+    items:["Eine Handvoll loser Schrauben, „falls etwas wackelt“"],
+    economy:{gluc:"mittel", marken:"hoch"},
+    goalPersonal:"Herausfinden, wo im Kreis eine Schwäche steckt — bevor es jemand anderes tut.",
+    goalTribe:"Die Ferroniten als verlässlichste Stimme im Rat positionieren.",
+    goalSecret:"—",
+    secretInfo:"Kennt Ilses Zugang zum Kreis, ohne ihre Zugehörigkeit zu ahnen.",
+    cards:[]
+  },
+  "UQHRVJ": {
+    name:"Vess Dorn", tribe:"ferroniten", archetype:"Zweifelnde",
+    motto:"Trocken, unbestechlich, hört genau hin",
+    strengths:["Trocken, unbestechlich, hört genau hin"],
+    weaknesses:["Glaubt niemandem aufs Wort — auch nicht sich selbst"],
+    items:["Ein zerfleddertes Notizbuch mit durchgestrichenen Einträgen"],
+    economy:{gluc:"mittel", marken:"hoch"},
+    goalPersonal:"Einen Beweis finden, dass der Kreis nicht hält, was er verspricht.",
+    goalTribe:"Ferroniten vor vorschnellen Entscheidungen bewahren.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "46A34F": {
+    name:"Tamin Ohrwerk", tribe:"ferroniten", archetype:"Lernende",
+    motto:"Wissbegierig und lernbereit",
+    strengths:["Wissbegierig und lernbereit"],
+    weaknesses:["Unsicher, will sich ständig beweisen"],
+    items:["Ein halbfertiges Uhrwerk ohne Zeiger"],
+    economy:{gluc:"gering", marken:"hoch"},
+    goalPersonal:"Von Garran als vollwertig anerkannt werden.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Träumt insgeheim davon, dass der Kreis sich ändert, nicht nur funktioniert.",
+    cards:[]
+  },
+  "ZQMJEG": {
+    name:"Ilse Wagram", tribe:"ferroniten", archetype:"Hütende",
+    motto:"Ruhig, zuverlässig — Person, der man automatisch vertraut",
+    strengths:["Ruhig, zuverlässig — Person, der man automatisch vertraut"],
+    weaknesses:["Muss ihre wahre Loyalität ständig verbergen"],
+    items:["Ein unscheinbares Werkzeug, das exakt in eine Schwachstelle des Kreises passt"],
+    economy:{gluc:"hoch", marken:"hoch"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"Als loyale Ferronitin erscheinen.",
+    goalSecret:"Kettenglied der Asche — verzögert die Aktivierung des Kreises, wenn nötig.",
+    secretInfo:"Sie ist Teil der Asche-Kette (nach Soran, vor Wilna).",
+    cards:[]
+  },
+  "93MDCP": {
+    name:"Berhta Sonnfeld", tribe:"vallari", archetype:"Älteste",
+    motto:"Herzlich und gastgeberisch",
+    strengths:["Herzlich und gastgeberisch","Unnachgiebig, wenn es um faires Teilen geht"],
+    weaknesses:["Kann Kritik am Buffet persönlich nehmen"],
+    items:["Der Schlüsselbund zum Vorratsraum"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Das Buffet fair durch den Abend bringen.",
+    goalTribe:"Die Mehrheit der Vallari sichtbar hinter sich versammeln.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "DN6NWJ": {
+    name:"Coen Brannigh", tribe:"vallari", archetype:"Stimme/Sehende",
+    motto:"Gesellig und aufmerksam",
+    strengths:["Gesellig und aufmerksam","Merkt sich jedes Gerücht"],
+    weaknesses:["Kann Gerüchte auch ungewollt weiterverbreiten"],
+    items:["Ein Krug, den er nie ganz leert"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Herausfinden, wer wirklich hungert und wer nur so tut.",
+    goalTribe:"Vallari als großzügig, aber nicht naiv zeigen.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "4B2RUD": {
+    name:"Wilna Krug", tribe:"vallari", archetype:"Zweifelnde",
+    motto:"Scharfzüngig, wird für ehrlich gehalten",
+    strengths:["Scharfzüngig, wird für ehrlich gehalten"],
+    weaknesses:["Ihr offener Zweifel ist auch eine Tarnung"],
+    items:["Ein Amulett aus grauer Asche, unter einem Schal verborgen"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"Als kritische, aber loyale Stimme gelten.",
+    goalSecret:"Kettenglied der Asche — nächstes Glied nach Ilse, davor Aurin.",
+    secretInfo:"Sie ist Teil der Asche-Kette.",
+    cards:[]
+  },
+  "8PCUK5": {
+    name:"Jory Amsel", tribe:"vallari", archetype:"Lernende",
+    motto:"Hilfsbereit bis zur Selbstaufgabe",
+    strengths:["Hilfsbereit bis zur Selbstaufgabe"],
+    weaknesses:["Lernt oft nur durch Zuschauen, zögert bei eigenen Entscheidungen"],
+    items:["Ein selbstgebackenes, nie angebotenes Brot"],
+    economy:{gluc:"mittel", marken:"gering"},
+    goalPersonal:"Berhtas Vertrauen gewinnen.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Hat einmal heimlich vom Embargo-Vorrat genommen — schämt sich dafür.",
+    cards:[]
+  },
+  "XW76NV": {
+    name:"Petra Lindwurm", tribe:"vallari", archetype:"Hütende",
+    motto:"Fürsorglich und verlässlich",
+    strengths:["Fürsorglich und verlässlich"],
+    weaknesses:["Verschwiegen über die eigene Herkunft"],
+    items:["Ein Bündel Samen aus einem Ort, den es nicht mehr gibt"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Die Herkunft der Samen für sich behalten.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Stammt ursprünglich nicht aus Thalvaràn — ein persönliches Geheimnis ohne Fraktionsbindung.",
+    cards:[]
+  },
+  "GZCBYH": {
+    name:"Kestrel Vane", tribe:"moryen", archetype:"Älteste",
+    motto:"Entscheidungsfreudig",
+    strengths:["Entscheidungsfreudig","Kennt jeden Weg außer den eigenen inneren"],
+    weaknesses:["Wortkarg bis zur Unnahbarkeit"],
+    items:["Ein Bündel Wegsteine"],
+    economy:{gluc:"mittel", marken:"mittel"},
+    goalPersonal:"Das Tor zur richtigen Zeit öffnen, nicht zur schnellsten.",
+    goalTribe:"Mor'Yen als verlässliche Wächter des Übergangs zeigen.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "3KC6H6": {
+    name:"Aurin Thess", tribe:"moryen", archetype:"Stimme/Sehende",
+    motto:"Ruhig, liest Vorzeichen, wo andere nur Wetter sehen",
+    strengths:["Ruhig, liest Vorzeichen, wo andere nur Wetter sehen"],
+    weaknesses:["Wirkt fast entrückt — schwer greifbar für andere"],
+    items:["Eine Handvoll Steine, die angeblich den Weg weisen"],
+    economy:{gluc:"mittel", marken:"mittel"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"Als verlässliche Seherin des Stammes gelten.",
+    goalSecret:"Kettenglied der Asche — nächstes Glied nach Wilna, davor Doln.",
+    secretInfo:"Teil der Asche-Kette.",
+    cards:[]
+  },
+  "DPJRX5": {
+    name:"Doran Fyk", tribe:"moryen", archetype:"Zweifelnde",
+    motto:"Direkt und entscheidungsfreudig",
+    strengths:["Direkt und entscheidungsfreudig"],
+    weaknesses:["Hält Zögern für Feigheit — auch bei sich selbst"],
+    items:["Eine abgenutzte Uhr ohne Zeiger"],
+    economy:{gluc:"mittel", marken:"mittel"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"Das Tor so schnell wie möglich öffnen lassen.",
+    goalSecret:"Gegenbund — erkennt Gleichgesinnte am Satz „Das Licht wartet nicht.“",
+    secretInfo:"Brückenpartner mit Mabel (Klingen) — beide Gegenbund, dürfen sich das nie anmerken lassen.",
+    cards:[]
+  },
+  "NFNNGY": {
+    name:"Sil Marrow", tribe:"moryen", archetype:"Lernende",
+    motto:"Neugierig und furchtlos",
+    strengths:["Neugierig und furchtlos"],
+    weaknesses:["Unbekümmert bis zur Leichtsinnigkeit"],
+    items:["Eine selbstgezeichnete, ungenaue Karte"],
+    economy:{gluc:"gering", marken:"mittel"},
+    goalPersonal:"Einen eigenen Weg finden, der noch niemandem gehört.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Brückenpartnerin mit Nissa (Solari) — beiden fällt die andere schon lange auf.",
+    cards:[]
+  },
+  "JZ8YXC": {
+    name:"Renna Ashcombe", tribe:"moryen", archetype:"Hütende",
+    motto:"Beschützend und loyal",
+    strengths:["Beschützend und loyal"],
+    weaknesses:["Wortkarg über die eigene Vergangenheit"],
+    items:["Ein Schlüssel zu einem Tor, das es nicht mehr gibt"],
+    economy:{gluc:"hoch", marken:"mittel"},
+    goalPersonal:"Herausfinden, wofür ihr Schlüssel heute noch passt.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Persönliches Geheimnis ohne Fraktionsbindung.",
+    cards:[]
+  },
+  "WXFU2H": {
+    name:"Torvin Rhen", tribe:"klingen", archetype:"Älteste",
+    motto:"Kommandierend, respektiert Stärke",
+    strengths:["Kommandierend, respektiert Stärke"],
+    weaknesses:["Verachtet Zögern, auch wenn es angebracht wäre"],
+    items:["Eine zeremonielle, stumpfe Klinge"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Respekt behalten, ohne ihn erzwingen zu müssen.",
+    goalTribe:"Die Klingen als Stimme der Entschlossenheit zeigen.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "FRPJ8X": {
+    name:"Kael Dross", tribe:"klingen", archetype:"Stimme/Sehende",
+    motto:"Aufmerksam und taktisch",
+    strengths:["Aufmerksam und taktisch"],
+    weaknesses:["Spricht wenig — wird leicht übersehen"],
+    items:["Ein Kompass ohne verlässliche Nadel"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Herausfinden, wer im Raum am meisten zu verlieren hat.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "ZUHYM5": {
+    name:"Yrsa Bolt", tribe:"klingen", archetype:"Zweifelnde",
+    motto:"Laut, aber ehrlich in der Sache",
+    strengths:["Laut, aber ehrlich in der Sache"],
+    weaknesses:["Militant im Ton — wird oft falsch verstanden"],
+    items:["Ein Kettenhemd-Fragment als Anhänger"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Beweisen, dass Härte nicht dasselbe ist wie Grausamkeit.",
+    goalTribe:"Die Klingen von Rhûn vor Naivität bewahren.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "33BH5B": {
+    name:"Finn Draeg", tribe:"klingen", archetype:"Lernende",
+    motto:"Ehrgeizig und lernwillig",
+    strengths:["Ehrgeizig und lernwillig"],
+    weaknesses:["Ungeduldig mit sich selbst"],
+    items:["Ein Übungsschwert aus Holz"],
+    economy:{gluc:"mittel", marken:"gering"},
+    goalPersonal:"Von Torvin als vollwertig anerkannt werden.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "4MPJCG": {
+    name:"Mabel Sceld", tribe:"klingen", archetype:"Hütende",
+    motto:"Wirkt wie die Ruhigste im Raum",
+    strengths:["Wirkt wie die Ruhigste im Raum"],
+    weaknesses:["Genau deshalb traut ihr niemand etwas zu — sie nutzt das aus"],
+    items:["Ein Bündel Botenpfeile ohne erkennbaren Absender"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"—",
+    goalSecret:"Gegenbund — Erkennungssatz „Das Licht wartet nicht.“",
+    secretInfo:"Brückenpartnerin mit Doran (Mor'Yen) — beide Gegenbund, dürfen sich das nie anmerken lassen.",
+    cards:[]
+  },
+  "89V7ZM": {
+    name:"Registrar Holt", tribe:"axiomaten", archetype:"Älteste",
+    motto:"Akribisch und unbestechlich im Amt",
+    strengths:["Akribisch und unbestechlich im Amt"],
+    weaknesses:["Glaubt an das Verzeichnis mehr als an Menschen"],
+    items:["Ein ledergebundenes Verzeichnis, halb beschrieben"],
+    economy:{gluc:"mittel", marken:"hoch"},
+    goalPersonal:"Das Verzeichnis vollständig halten.",
+    goalTribe:"Die Axiomaten als unbestechliche Instanz zeigen.",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "GXSP78": {
+    name:"Vantis Roh", tribe:"axiomaten", archetype:"Zweifelnde",
+    motto:"Ehrlich misstrauisch",
+    strengths:["Ehrlich misstrauisch"],
+    weaknesses:["Unterschätzt sich selbst systematisch"],
+    items:["Eine Lupe, durch die nichts wirklich klarer wird"],
+    economy:{gluc:"mittel", marken:"hoch"},
+    goalPersonal:"Den einen Fehler im System finden, der alles erklärt.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Brückenpartner mit Amara (Solari) — ahnt nicht, wie berechtigt sein Misstrauen ist.",
+    cards:[]
+  },
+  "XREJEH": {
+    name:"Sera Klemm", tribe:"axiomaten", archetype:"Lernende",
+    motto:"Talentiert und ehrgeizig",
+    strengths:["Talentiert und ehrgeizig"],
+    weaknesses:["Trägt eine leise Bitterkeit über ihren Ausschluss"],
+    items:["Eine eigene, inoffizielle Kopie der Folge, unvollständig"],
+    economy:{gluc:"gering", marken:"hoch"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"—",
+    goalSecret:"Gegenbund — will beweisen, dass ihr Ausschluss von der Zwischenklang-Karte ein Fehler war, notfalls mit falschen Mitteln.",
+    secretInfo:"Ihr wurde die Zwischenklang-Karte verweigert — das wurmt sie mehr, als sie zugibt.",
+    cards:[]
+  },
+  "2UUJ2V": {
+    name:"Doln Aschgrau", tribe:"axiomaten", archetype:"Hütende",
+    motto:"Freundlich und hilfsbereit — wird nie verdächtigt",
+    strengths:["Freundlich und hilfsbereit — wird nie verdächtigt"],
+    weaknesses:["Trägt die schwerste Last der Asche mit sich"],
+    items:["Das gefälschte Glied der Folge, unauffällig verpackt"],
+    economy:{gluc:"hoch", marken:"hoch"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"—",
+    goalSecret:"Kettenglied der Asche — nächstes Glied nach Aurin, davor Amara.",
+    secretInfo:"Weiß, welches Glied der Axiomaten-Folge gefälscht ist. Brückenpartner mit Nael (Myrrhiden).",
+    cards:[]
+  },
+  "Q7VPNH": {
+    name:"Mira", tribe:"myrrhiden", archetype:"Stimme/Sehende",
+    motto:"Sanft und aufmerksam",
+    strengths:["Sanft und aufmerksam","Trägt Verantwortung ohne Aufhebens"],
+    weaknesses:["Zurückhaltend bis zur Unsichtbarkeit"],
+    items:["Eine kleine Klangschale"],
+    economy:{gluc:"gering", marken:"gering"},
+    goalPersonal:"Ihren Ton beschützen, bis der richtige Moment kommt.",
+    goalTribe:"Den Myrrhiden-Weg der Stille und des Erinnerns wahren.",
+    goalSecret:"—",
+    secretInfo:"Trägt einen der drei Töne.",
+    cards:[]
+  },
+  "ETSC3B": {
+    name:"Nael", tribe:"myrrhiden", archetype:"Zweifelnde",
+    motto:"Trägt Pflicht trotz eigenem Zweifel",
+    strengths:["Trägt Pflicht trotz eigenem Zweifel"],
+    weaknesses:["Glaubt selbst nicht an das, was sie tut"],
+    items:["Ein Erinnerungsstück, das mehr weiß, als sie ahnt"],
+    economy:{gluc:"gering", marken:"gering"},
+    goalPersonal:"Herausfinden, ob ihr Ton überhaupt noch etwas bedeutet.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Trägt unwissentlich das gefälschte Glied der Axiomaten-Folge in einer Erinnerung. Brückenpartnerin mit Doln (Axiomaten).",
+    cards:[]
+  },
+  "6DEXF4": {
+    name:"Toma Reed", tribe:"myrrhiden", archetype:"Lernende",
+    motto:"Still und beobachtend",
+    strengths:["Still und beobachtend"],
+    weaknesses:["Fühlt sich oft übersehen"],
+    items:["Ein leeres Notizbuch"],
+    economy:{gluc:"gering", marken:"gering"},
+    goalPersonal:"Einen eigenen Platz im Stamm finden.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "YQWCPP": {
+    name:"Lior Sandkeep", tribe:"solari", archetype:"Älteste",
+    motto:"Die ruhigste Instanz im Raum",
+    strengths:["Die ruhigste Instanz im Raum"],
+    weaknesses:["Ungeduldig im Verborgenen — ganz anders, als er wirkt"],
+    items:["Eine Lichtschale, die nie ganz erlischt"],
+    economy:{gluc:"hoch", marken:"mittel"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"Solari als geduldigste Kraft der Vermittlung zeigen — nach außen.",
+    goalSecret:"Gegenbund — Erkennungssatz „Das Licht wartet nicht.“",
+    secretInfo:"—",
+    cards:[]
+  },
+  "WRTJU6": {
+    name:"Amara Vell", tribe:"solari", archetype:"Stimme/Sehende",
+    motto:"Warmherzig und überzeugend",
+    strengths:["Warmherzig und überzeugend"],
+    weaknesses:["Glaubt selbst fast an das, was sie vorgibt"],
+    items:["Ein Amulett, das Licht bricht statt es zu bündeln"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Unentdeckt bleiben.",
+    goalTribe:"Als aufrichtigste Vermittlerin des Abends gelten.",
+    goalSecret:"Schließt den Ring der Asche zu Soran.",
+    secretInfo:"Kettenglied der Asche — letztes Glied vor Soran. Brückenpartnerin mit Vantis (Axiomaten), der ihr heimliches Verzögern nicht durchschaut.",
+    cards:[]
+  },
+  "9AY2DY": {
+    name:"Renz Kolb", tribe:"solari", archetype:"Zweifelnde",
+    motto:"Ungeduldig im Ton, ehrlich in der Haltung",
+    strengths:["Ungeduldig im Ton, ehrlich in der Haltung"],
+    weaknesses:["Verwechselt Verzögerung schnell mit Feigheit"],
+    items:["Eine erloschene Kerze, die er immer wieder anzünden will"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Beweisen, dass Vermittlung nicht dasselbe ist wie Verzögerung.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"—",
+    cards:[]
+  },
+  "7U3J3X": {
+    name:"Nissa Warm", tribe:"solari", archetype:"Lernende",
+    motto:"Offen und hoffnungsvoll",
+    strengths:["Offen und hoffnungsvoll"],
+    weaknesses:["Glaubt manchmal zu fest an einfache Lösungen"],
+    items:["Ein Stück Glas, das Licht in Farben bricht"],
+    economy:{gluc:"mittel", marken:"gering"},
+    goalPersonal:"Einen eigenen Weg zwischen den Stämmen finden.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Brückenpartnerin mit Sil (Mor'Yen) — beiden fällt die andere schon lange auf.",
+    cards:[]
+  },
+  "MDKQFR": {
+    name:"Beck Aurel", tribe:"solari", archetype:"Hütende",
+    motto:"Geduldig und aufmerksam",
+    strengths:["Geduldig und aufmerksam"],
+    weaknesses:["Hält sich stark zurück, auch wenn Klarheit nötig wäre"],
+    items:["Eine Lichtkapsel, die niemand außer ihm öffnen kann"],
+    economy:{gluc:"hoch", marken:"gering"},
+    goalPersonal:"Herausfinden, wofür die Kapsel eigentlich gedacht war.",
+    goalTribe:"—",
+    goalSecret:"—",
+    secretInfo:"Persönliches Geheimnis ohne Fraktionsbindung.",
+    cards:[]
+  }
+
+};
+
+var COSTUME_HINTS = {
+  ferroniten:"Kühle Blau-Grau-Töne, klare Linien, Metall- und Industrie-Anklänge. Uniform-artig, aufrecht, wenig Schmuck — Struktur als Statement.",
+  vallari:"Warme Erdtöne, praktische, gemeinschaftliche Kleidung. Wirkt genutzt, gelebt, gastgeberisch — nicht steif.",
+  moryen:"Fließende Stoffe, Violett- und Erdtöne, Reise- und Wanderkleidung. Ein kleines Wegzeichen (Stein, Marke) als Accessoire passt gut.",
+  axiomaten:"Kühles Türkis, klare, fast technische Linien. Etwas Seherisches, Ruhiges — wenig Farbe, viel Präzision.",
+  klingen:"Warmes Gold-Bronze, kriegerisch-elegant. Klingen- oder Waffenmotive nur angedeutet, nicht real.",
+  myrrhiden:"Gedämpfte Silbergrau-Töne, still, unauffällig. Zurückhaltung ist hier ein Stilmittel, kein Mangel.",
+  solari:"Warmes Gold, helle, leichte Stoffe. Licht als Motiv — offene Handflächen, wenig Verhülltes."
+};
+
+/* ---- Gate-Logik ---- */
+function norm(s){ return (s||"").trim().toUpperCase(); }
+
+var input = document.getElementById("codeInput");
+var btn = document.getElementById("gateBtn");
+var err = document.getElementById("gateErr");
+
+function tryEnter(){
+  var code = norm(input.value);
+  var p = PLAYERS[code];
+  if(!p){ err.textContent = "Code nicht erkannt. Bitte prüfe die Schreibweise."; return; }
+  err.textContent = "";
+  renderPlayer(code, p);
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("app").classList.add("on");
+  try{ sessionStorage.setItem("thalvaran_code", code); }catch(e){}
+}
+btn.addEventListener("click", tryEnter);
+input.addEventListener("keydown", function(e){ if(e.key === "Enter") tryEnter(); });
+
+document.getElementById("logout").addEventListener("click", function(){
+  document.getElementById("app").classList.remove("on");
+  document.getElementById("gate").style.display = "flex";
+  input.value = ""; input.focus();
+  try{ sessionStorage.removeItem("thalvaran_code"); }catch(e){}
+});
+
+function fillList(id, arr){
+  var el = document.getElementById(id); el.innerHTML = "";
+  (arr||[]).forEach(function(t){ var li = document.createElement("li"); li.textContent = t; el.appendChild(li); });
+}
+
+function renderPlayer(code, p){
+  var tc = TRIBE_COLOR[p.tribe] || "#e7a44a";
+  document.getElementById("whoName").textContent = p.name;
+  document.getElementById("whoTribe").textContent = "· " + (TRIBE_NAME[p.tribe]||"");
+
+  document.getElementById("dName").textContent = p.name;
+  document.getElementById("dHead").textContent = (TRIBE_NAME[p.tribe]||"") + " · " + p.archetype;
+  document.getElementById("dHead").style.color = tc;
+  document.getElementById("dMotto").textContent = p.motto || "";
+
+  fillList("dStrengths", p.strengths);
+  fillList("dWeaknesses", p.weaknesses);
+  fillList("dItems", p.items);
+  fillList("dCards", p.cards);
+
+  document.getElementById("dStrengthsCard").style.setProperty("--tc", tc);
+  document.getElementById("dWeaknessCard").style.setProperty("--tc", tc);
+
+  var econ = document.getElementById("dEconomy"); econ.innerHTML = "";
+  ["gluc","marken"].forEach(function(k){
+    if(p.economy && p.economy[k]){
+      var c = document.createElement("span"); c.className="chip";
+      c.textContent = (k==="gluc"?"Glut: ":"Marken: ") + p.economy[k];
+      econ.appendChild(c);
+    }
+  });
+
+  document.getElementById("dGoalPersonal").textContent = " " + (p.goalPersonal || "—");
+  document.getElementById("dGoalTribe").textContent = " " + (p.goalTribe || "—");
+  document.getElementById("dGoalSecret").textContent = " " + (p.goalSecret || "—");
+  document.getElementById("dSecretInfo").textContent = " " + (p.secretInfo || "—");
+
+  var cc = document.getElementById("tribeCostumes"); cc.innerHTML = "";
+  Object.keys(TRIBE_NAME).forEach(function(k){
+    var isMine = k === p.tribe;
+    var div = document.createElement("div");
+    div.className = "card tint" + (isMine ? "" : "");
+    div.style.setProperty("--tc", TRIBE_COLOR[k]);
+    div.innerHTML = "<p class='label'><b>"+TRIBE_NAME[k]+(isMine?" — dein Stamm":"")+"</b>"+COSTUME_HINTS[k]+"</p>";
+    if(isMine) div.style.order = -1;
+    cc.appendChild(div);
+  });
+  cc.style.display = "flex"; cc.style.flexDirection = "column";
+}
+
+/* ---- Tabs ---- */
+var tabs = document.querySelectorAll("nav.tabs button");
+var views = document.querySelectorAll("section.view");
+tabs.forEach(function(b){
+  b.addEventListener("click", function(){
+    tabs.forEach(function(x){ x.setAttribute("aria-current","false"); });
+    b.setAttribute("aria-current","true");
+    views.forEach(function(v){ v.classList.remove("on"); });
+    document.getElementById("v-"+b.dataset.v).classList.add("on");
+    window.scrollTo(0,0);
+  });
+});
+
+/* ---- Sitzung merken (nur für diesen Tab, kein echtes Login) ---- */
+(function(){
+  try{
+    var saved = sessionStorage.getItem("thalvaran_code");
+    if(saved && PLAYERS[saved]){
+      input.value = saved;
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

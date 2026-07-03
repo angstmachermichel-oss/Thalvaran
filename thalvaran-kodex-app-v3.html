@@ -115,6 +115,46 @@ const ARCHETYPES = [
   {id:'hueter', name:'Geheimnisträger', desc:'Hält ein Geheimnis, das den Ausgang berührt.'}
 ];
 const GRABEN = [['fer','val'],['moy','rhu'],['axi','myr'],['axi','sol'],['moy','sol']];
+const ZK_HOLDERS = ["46A34F","8PCUK5","NFNNGY","33BH5B","7U3J3X"];
+
+// ---------- Rollen-Code-Register (alle 35 Rollen) ----------
+const PLAYERS = {
+  "XDA2JH": { name:"Soran Glanz", tribe:"myr", archetype:"aeltester" },
+  "HE2DY2": { name:"Sela vom dritten Ton", tribe:"myr", archetype:"hueter" },
+  "7UCVQB": { name:"Garran Eisenwort", tribe:"fer", archetype:"aeltester" },
+  "ACGHTW": { name:"Iden Var", tribe:"axi", archetype:"stimme" },
+  "AUGZXZ": { name:"Rasp Kettling", tribe:"fer", archetype:"stimme" },
+  "UQHRVJ": { name:"Vess Dorn", tribe:"fer", archetype:"skeptiker" },
+  "46A34F": { name:"Tamin Ohrwerk", tribe:"fer", archetype:"lehrling" },
+  "ZQMJEG": { name:"Ilse Wagram", tribe:"fer", archetype:"hueter" },
+  "93MDCP": { name:"Berhta Sonnfeld", tribe:"val", archetype:"aeltester" },
+  "DN6NWJ": { name:"Coen Brannigh", tribe:"val", archetype:"stimme" },
+  "4B2RUD": { name:"Wilna Krug", tribe:"val", archetype:"skeptiker" },
+  "8PCUK5": { name:"Jory Amsel", tribe:"val", archetype:"lehrling" },
+  "XW76NV": { name:"Petra Lindwurm", tribe:"val", archetype:"hueter" },
+  "GZCBYH": { name:"Kestrel Vane", tribe:"moy", archetype:"aeltester" },
+  "3KC6H6": { name:"Aurin Thess", tribe:"moy", archetype:"stimme" },
+  "DPJRX5": { name:"Doran Fyk", tribe:"moy", archetype:"skeptiker" },
+  "NFNNGY": { name:"Sil Marrow", tribe:"moy", archetype:"lehrling" },
+  "JZ8YXC": { name:"Renna Ashcombe", tribe:"moy", archetype:"hueter" },
+  "WXFU2H": { name:"Torvin Rhen", tribe:"rhu", archetype:"aeltester" },
+  "FRPJ8X": { name:"Kael Dross", tribe:"rhu", archetype:"stimme" },
+  "ZUHYM5": { name:"Yrsa Bolt", tribe:"rhu", archetype:"skeptiker" },
+  "33BH5B": { name:"Finn Draeg", tribe:"rhu", archetype:"lehrling" },
+  "4MPJCG": { name:"Mabel Sceld", tribe:"rhu", archetype:"hueter" },
+  "89V7ZM": { name:"Registrar Holt", tribe:"axi", archetype:"aeltester" },
+  "GXSP78": { name:"Vantis Roh", tribe:"axi", archetype:"skeptiker" },
+  "XREJEH": { name:"Sera Klemm", tribe:"axi", archetype:"lehrling" },
+  "2UUJ2V": { name:"Doln Aschgrau", tribe:"axi", archetype:"hueter" },
+  "Q7VPNH": { name:"Mira", tribe:"myr", archetype:"stimme" },
+  "ETSC3B": { name:"Nael", tribe:"myr", archetype:"skeptiker" },
+  "6DEXF4": { name:"Toma Reed", tribe:"myr", archetype:"lehrling" },
+  "YQWCPP": { name:"Lior Sandkeep", tribe:"sol", archetype:"aeltester" },
+  "WRTJU6": { name:"Amara Vell", tribe:"sol", archetype:"stimme" },
+  "9AY2DY": { name:"Renz Kolb", tribe:"sol", archetype:"skeptiker" },
+  "7U3J3X": { name:"Nissa Warm", tribe:"sol", archetype:"lehrling" },
+  "MDKQFR": { name:"Beck Aurel", tribe:"sol", archetype:"hueter" }
+};
 
 const CARD_POOL = [
   {id:'kreisbefehl', name:'Kreisbefehl', type:'Macht', tribe:'fer', cost:0, effect:'Setzt den Ferroniten-Kreis (Erwachensschritt I) einen Schritt weiter.'},
@@ -125,7 +165,9 @@ const CARD_POOL = [
   {id:'wegzeichen', name:'Wegzeichen', type:'Druck', tribe:'rhu', cost:0, effect:'Erzwingt eine sofortige Antwort von einer Person deiner Wahl.'},
   {id:'gluthauch', name:'Gluthauch', type:'Schild', tribe:'sol', cost:1, effect:'Schützt einen angenommenen Kodex-Satz vor erneuter Anfechtung.'},
   {id:'lauschen', name:'Lauschen', type:'List', tribe:null, cost:1, effect:'Du hörst ein Gespräch im Nebenraum mit.'},
-  {id:'zwischenklang', name:'Zwischenklang', type:'Bindung', tribe:null, archetype:'lehrling', cost:0, effect:'Schaltet eine Kodex-Fusion frei, sobald die nötigen Basissätze stehen.'}
+  {id:'zwischenklang', name:'Zwischenklang', type:'Bindung', tribe:null, archetype:'lehrling', cost:0, effect:'Schaltet eine Kodex-Fusion frei, sobald die nötigen Basissätze stehen.'},
+  {id:'ratsstimme', name:'Ratsstimme', type:'Macht', tribe:null, archetype:'aeltester', cost:0, effect:'Deine Stimme zählt doppelt bei einer Stammesentscheidung.'},
+  {id:'widerstand', name:'Widerstand', type:'Zweifel', tribe:null, archetype:'skeptiker', cost:0, effect:'Verzögert eine laufende Kodex-Abstimmung um eine Runde.'}
 ];
 
 const CATEGORIES = [
@@ -245,21 +287,51 @@ async function pushEvent(text){
   events.push({id:uid(),ts:Date.now(),text});
   await sSet('events', events.slice(-50), true);
 }
-function starterHand(tribe, archetype){
-  const tribeCards = CARD_POOL.filter(c=>c.tribe===tribe).map(c=>c.id);
-  const generic = ['lauschen'];
-  const arch = archetype==='lehrling' ? ['zwischenklang'] : [];
-  return [...tribeCards, ...generic, ...arch];
+const TRIBE_BASE_TIER = {
+  fer:{g:1,m:2}, val:{g:2,m:0}, moy:{g:1,m:1}, rhu:{g:2,m:0}, axi:{g:1,m:2}, myr:{g:0,m:0}, sol:{g:2,m:0}
+};
+const GLUT_TIERS=[3,5,7], MARKEN_TIERS=[1,2,3];
+function clampTier(v){ return Math.max(0, Math.min(2, v)); }
+function starterEconomy(code){
+  const p = PLAYERS[code]; if(!p) return {glut:5, marken:2};
+  const base = TRIBE_BASE_TIER[p.tribe] || {g:1,m:1};
+  let g = base.g, m = base.m;
+  if(p.archetype==='aeltester') m = clampTier(m+1);
+  if(p.archetype==='lehrling') g = clampTier(g-1);
+  if(p.archetype==='hueter') g = clampTier(g+1);
+  return { glut: GLUT_TIERS[g], marken: MARKEN_TIERS[m] };
+}
+function starterHand(code){
+  const p = PLAYERS[code]; if(!p) return [];
+  const {tribe, archetype} = p;
+  const hand = [];
+  if(archetype==='aeltester'){
+    hand.push('ratsstimme');
+    const tribeKeyByTribe = {fer:'kreisbefehl', val:'buffetschluessel', moy:'torimpuls', rhu:'wegzeichen', sol:'gluthauch'};
+    if(tribeKeyByTribe[tribe]) hand.push(tribeKeyByTribe[tribe]);
+  } else if(archetype==='stimme'){
+    hand.push('lauschen');
+    if(tribe==='axi') hand.push('folgenglied');
+    if(tribe==='myr') hand.push('dritterton');
+  } else if(archetype==='skeptiker'){
+    hand.push('widerstand');
+    if(tribe==='myr') hand.push('dritterton');
+  } else if(archetype==='lehrling'){
+    if(ZK_HOLDERS.includes(code)) hand.push('zwischenklang');
+  } else if(archetype==='hueter'){
+    if(tribe==='myr') hand.push('dritterton');
+  }
+  return hand;
 }
 async function registerGuest(){
   const guests=(await sGet('guests',true))||{};
   guests[state.identity.guestId] = {name:state.identity.name, tribe:state.identity.tribe, archetype:state.identity.archetype};
   await sSet('guests', guests, true);
   const economy=(await sGet('economy',true))||{};
-  if(!economy[state.identity.guestId]) economy[state.identity.guestId] = {glut:5, marken:2};
+  if(!economy[state.identity.guestId]) economy[state.identity.guestId] = starterEconomy(state.identity.guestId);
   await sSet('economy', economy, true);
   const hands=(await sGet('hands',true))||{};
-  if(!hands[state.identity.guestId]) hands[state.identity.guestId] = starterHand(state.identity.tribe, state.identity.archetype);
+  if(!hands[state.identity.guestId]) hands[state.identity.guestId] = starterHand(state.identity.guestId);
   await sSet('hands', hands, true);
 }
 async function checkFusionUnlock(){
@@ -372,6 +444,7 @@ function tabProfil(){
       <div class="eyebrow">Ereignisse</div>
       <div class="feed">${state.events.slice().reverse().map(e=>`<div>${e.text}</div>`).join('')}</div>
     </div>
+    <button class="ghost" id="switchCode" style="width:100%">Code wechseln</button>
   `;
 }
 
@@ -476,7 +549,7 @@ function tabChat(){
 
 function render(){
   const root = document.getElementById('root');
-  if(!state.identity){ root.innerHTML = loginScreen(); attachLoginHandlers(); return; }
+  if(!state.identity){ root.innerHTML = gateScreen(); attachGateHandlers(); return; }
 
   if(state.announcement && state.announcement.id !== state.seenAnnouncementId){
     root.innerHTML = `
@@ -506,23 +579,17 @@ function render(){
 }
 function labelFor(t){ return {profil:'Profil',oekonomie:'Glut',karten:'Karten',kodex:'Kodex',chat:'Rat'}[t]; }
 
-function loginScreen(){
+function gateScreen(){
   return `
-  <div class="wrap" style="padding-top:50px">
+  <div class="wrap" style="padding-top:60px;text-align:center">
     <div class="eyebrow">Thalvaràn · Die Lange Nacht</div>
-    <h1>Wer bist du?</h1>
-    <div class="card">
-      <input type="text" id="nameInput" placeholder="Dein Name">
-      <div class="small" style="margin:10px 0 4px">Stamm</div>
-      <div class="tribegrid" id="tribeGrid">
-        ${Object.entries(TRIBES).map(([code,t])=>`<button class="tribebtn" data-t="${code}" style="background:${t.c}22;color:${t.c};border-color:${t.c}55">${t.name}</button>`).join('')}
-      </div>
-      <div class="small" style="margin:10px 0 4px">Archetyp</div>
-      <div class="archgrid" id="archGrid">
-        ${ARCHETYPES.map(a=>`<button class="archbtn" data-a="${a.id}">${a.name} — <span class="small">${a.desc}</span></button>`).join('')}
-      </div>
-      <button class="primary" id="loginBtn" style="width:100%;margin-top:6px">Eintreten</button>
+    <h1>Dein Zugang</h1>
+    <div class="card" style="text-align:left">
+      <input type="text" id="codeInput" placeholder="DEIN CODE" style="text-transform:uppercase;text-align:center;letter-spacing:.14em;font-family:var(--mono)">
+      <button class="primary" id="codeBtn" style="width:100%;margin-top:10px">Eintreten</button>
+      <div class="small" id="codeErr" style="margin-top:8px;min-height:16px"></div>
     </div>
+    <p class="small">Deinen Code findest du auf deiner Einladung / Zugangsseite. Bitte nicht weitergeben.</p>
   </div>`;
 }
 
@@ -564,18 +631,26 @@ function gmPanel(){
   </div></div>`;
 }
 
-function attachLoginHandlers(){
-  let selTribe=null, selArch=null;
-  document.querySelectorAll('.tribebtn').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.tribebtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); selTribe=b.dataset.t; });
-  document.querySelectorAll('.archbtn').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.archbtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); selArch=b.dataset.a; });
-  document.getElementById('loginBtn').onclick = async () => {
-    const name = document.getElementById('nameInput').value.trim();
-    if(!name||!selTribe||!selArch){ alert('Bitte Name, Stamm und Archetyp wählen.'); return; }
-    state.identity = {guestId:uid(), name, tribe:selTribe, archetype:selArch};
-    await sSet('identity', state.identity, false);
-    await registerGuest();
-    await loadShared();
-  };
+function attachGateHandlers(){
+  const btn = document.getElementById('codeBtn');
+  const input = document.getElementById('codeInput');
+  function tryEnter(){
+    const code = (input.value||'').trim().toUpperCase();
+    const p = PLAYERS[code];
+    if(!p){ document.getElementById('codeErr').textContent = 'Code nicht erkannt. Bitte prüfe die Schreibweise.'; return; }
+    enterWithCode(code);
+  }
+  btn.onclick = tryEnter;
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') tryEnter(); });
+  input.focus();
+}
+async function enterWithCode(code){
+  const p = PLAYERS[code];
+  state.identity = { guestId: code, name: p.name, tribe: p.tribe, archetype: p.archetype };
+  await sSet('playerCode', code, false);
+  await registerGuest();
+  await loadShared();
+  if(!state._pollingStarted){ state._pollingStarted = true; setInterval(loadShared, 3000); }
 }
 function attachHandlers(){
   document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{ state.tab=b.dataset.tab; render(); });
@@ -599,21 +674,23 @@ function attachHandlers(){
   const reserveSet=document.getElementById('reserveSet'); if(reserveSet) reserveSet.onclick=()=>gmSetReserve(document.getElementById('reserveInput').value);
   const eventSend=document.getElementById('eventSend'); if(eventSend) eventSend.onclick=()=>gmBroadcast(document.getElementById('eventInput').value);
   document.querySelectorAll('.ecoBtn').forEach(b=>b.onclick=()=>gmAdjustEconomy(b.dataset.gid, b.dataset.f, parseInt(b.dataset.d)));
+  const switchCode=document.getElementById('switchCode'); if(switchCode) switchCode.onclick = async () => {
+    await sSet('playerCode', null, false);
+    state.identity = null;
+    render();
+  };
 }
 
 async function boot(){
   await initSharedIfEmpty();
-  let id = await sGet('identity', false);
-  if(!id){
-    id = {guestId: uid(), name:'Iden Var', tribe:'axi', archetype:'stimme'};
-    await sSet('identity', id, false);
-  }
-  state.identity = id;
   const seen = await sGet('seenAnnouncementId', false);
   if(seen) state.seenAnnouncementId = seen;
-  await registerGuest();
-  await loadShared();
-  setInterval(loadShared, 3000);
+  const savedCode = await sGet('playerCode', false);
+  if(savedCode && PLAYERS[savedCode]){
+    await enterWithCode(savedCode);
+  } else {
+    render();
+  }
 }
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
