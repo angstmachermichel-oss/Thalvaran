@@ -3,7 +3,7 @@
 // Netz startet (z. B. wenn im Saal das WLAN mal hakt).
 const CACHE_NAME = "thalvaran-kodex-v1";
 const CORE_ASSETS = [
-  "./thalvaran-kodex-app-v3.html",
+  "./thalvaran-kodex-app.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
