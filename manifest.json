@@ -2,7 +2,7 @@
   "name": "Thalvaràn — Die Lange Nacht",
   "short_name": "Thalvaràn",
   "description": "Kodex-App für Thalvaràn — Die Lange Nacht: Dossier, Ökonomie, Fähigkeitskarten und der Kodex-Auftrag.",
-  "start_url": "./thalvaran-kodex-app-v3.html",
+  "start_url": "./thalvaran-kodex-app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
