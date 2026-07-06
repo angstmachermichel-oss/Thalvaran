@@ -73,9 +73,11 @@
   .voteopts{display:flex;gap:8px;margin-top:10px}
   .voteopts button{flex:1}
   .banner{background:linear-gradient(90deg,var(--aurora),var(--ember));color:#0b0e10;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.5}
-  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#0e1315;border-top:1px solid #232b2f;display:flex;z-index:60}
-  .tabbtn{flex:1;background:none;border:none;color:var(--bone-dim);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:10px 2px;border-radius:0}
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#0e1315;border-top:1px solid #232b2f;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;z-index:60}
+  .tabbtn{flex:0 0 auto;min-width:72px;background:none;border:none;color:var(--bone-dim);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:10px 8px;border-radius:0;white-space:nowrap}
   .tabbtn.active{color:var(--aurora);border-top:2px solid var(--aurora)}
+  .infoSubBtn{background:var(--ink3);border:1px solid #232b2f;color:var(--bone-dim);font-family:var(--mono);font-size:11px;padding:8px 12px;border-radius:16px}
+  .infoSubBtn.active{background:var(--aurora);color:#08110d;border-color:var(--aurora)}
   .gmbtn{position:fixed;top:12px;right:12px;z-index:70;font-size:11px;padding:6px 10px;opacity:.65}
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;overflow-y:auto}
   .overlay .wrap{background:var(--ink);min-height:100vh}
@@ -96,6 +98,9 @@
 <!-- QR-Code erzeugen (Empfangs-Code) und lesen (Kamera-Scan) -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- Firebase (geteilter Spielzustand) — Config folgt weiter unten im Skript -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -128,13 +133,13 @@ const PLAYERS = {
   "XDA2JH": {
     name:"Soran Glanz", tribe:"myr", archetype:"aeltester",
     strengths:["Vertrauenswürdige Fassade — niemand verdächtigt ihn zuerst","Kennt die Wege der Asche in allen sieben Stämmen","Ruhig unter Druck, auch in die Enge getrieben"], weaknesses:["Muss die Kreiswächterin und den Mord verschleiern","Zwei versiegelte Loyalitäten, die ihn zerreißen können"],
-    goalPersonal:"Unentdeckt durch den Abend kommen.", goalTribe:"Als loyaler Myrrhide erscheinen, der dem Stamm dient.", goalSecret:"Ringführer der Asche: das Erwachen um jeden Preis verhindern — die Kreiswächterin zum Schweigen gebracht haben und den Mord in Akt III begangen haben.",
+    goalPersonal:"Unentdeckt durch den Abend kommen.", goalTribe:"Als loyaler Myrrhide erscheinen, der dem Stamm dient.", goalSecret:"Ringführer der Asche: das Erwachen um jeden Preis verhindern — die Kreiswächterin zum Schweigen gebracht haben und den Mord in Akt III begangen haben. Duldet auch keinen Mitklang der Stämme — jede Einheit, ob durch Maschine oder Fusion, ist für ihn dieselbe Gefahr.",
     tick:"Streicht sich glatt über den Ärmel, bevor er spricht", ritual:"Berührt kurz das versteckte Aschezeichen, wenn niemand hinsieht"
   },
   "HE2DY2": {
     name:"Sela vom dritten Ton", tribe:"myr", archetype:"hueter",
     strengths:["Trägt einen der drei Töne — ohne sie bleibt das Tor stumm","Wird unterschätzt, weil sie kein Stimmrecht hat","Hört, was andere im Lärm überhören"], weaknesses:["Ohne Mira und Nael kann sie allein nichts bewirken","Ihr Ton ist wertvoll — das macht sie zum Ziel"],
-    goalPersonal:"Den eigenen Ton beschützen, bis der richtige Moment kommt.", goalTribe:"Den Myrrhiden-Weg der Stille und des Erinnerns wahren.", goalSecret:"—",
+    goalPersonal:"Den eigenen Ton beschützen, bis der richtige Moment kommt — auch wenn sie sich insgeheim fragt, ob das Tor überhaupt der richtige Moment ist.", goalTribe:"Den Myrrhiden-Weg der Stille und des Erinnerns wahren.", goalSecret:"Ahnt als Einzige beider Wege, dass der erste gelingende Zwischenklang mehr verändern könnte als ein vollständiges Tor. Sollte es so weit kommen, will sie diesem Miteinander — dem Mitklang — als Erste einen Namen und eine Stimme geben.",
     tick:"Neigt den Kopf leicht zur Seite beim Zuhören", ritual:"Reibt die Klangschale einmal, bevor sie etwas Wichtiges sagt"
   },
   "7UCVQB": {
@@ -152,7 +157,7 @@ const PLAYERS = {
   "AUGZXZ": {
     name:"Rasp Kettling", tribe:"fer", archetype:"stimme",
     strengths:["Beobachtend und technisch versiert","Merkt sich jedes strukturelle Detail"], weaknesses:["Spricht lieber in Diagrammen als in Gefühlen"],
-    goalPersonal:"Herausfinden, wo im Kreis eine Schwäche steckt — bevor es jemand anderes tut.", goalTribe:"Die Ferroniten als verlässlichste Stimme im Rat positionieren.", goalSecret:"—",
+    goalPersonal:"Herausfinden, wer im eigenen Stamm ein Werkzeug bei sich trägt, das nicht zu seiner Aufgabe passt — das würde die Schwachstelle im Kreis verraten.", goalTribe:"Die Ferroniten als verlässlichste Stimme im Rat positionieren.", goalSecret:"—",
     tick:"Kritzelt Diagramme auf jede verfügbare Fläche", ritual:"Prüft dreimal, ob eine Schraube locker ist"
   },
   "UQHRVJ": {
@@ -164,43 +169,43 @@ const PLAYERS = {
   "46A34F": {
     name:"Tamin Ohrwerk", tribe:"fer", archetype:"lehrling",
     strengths:["Wissbegierig und lernbereit"], weaknesses:["Unsicher, will sich ständig beweisen"],
-    goalPersonal:"Von Garran als vollwertig anerkannt werden.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Von Garran als vollwertig anerkannt werden. Und: findet in Jory Amsel von den Vallari jemanden, der zuhört, ohne sofort zu urteilen — das ist selten genug, um mehr daraus zu wollen.", goalTribe:"—", goalSecret:"—",
     tick:"Dreht das Uhrwerk in der Tasche, wenn unsicher", ritual:"Fragt bei jeder neuen Info sofort 'warum'"
   },
   "ZQMJEG": {
     name:"Ilse Wagram", tribe:"fer", archetype:"hueter",
     strengths:["Ruhig, zuverlässig — Person, der man automatisch vertraut"], weaknesses:["Muss ihre wahre Loyalität ständig verbergen"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als loyale Ferronitin erscheinen.", goalSecret:"Kettenglied der Asche — verzögert die Aktivierung des Kreises, wenn nötig.",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als loyale Ferronitin erscheinen.", goalSecret:"Kettenglied der Asche — verzögert die Aktivierung des Kreises, wenn nötig. Insgeheim hofft sie, dass der Mitklang der Stämme gelingt — ein Ausweg, der niemanden verbrennt.",
     tick:"Lächelt eine Spur zu lange", ritual:"Prüft unauffällig, ob die Gürteltasche noch verschlossen ist"
   },
   "93MDCP": {
     name:"Berhta Sonnfeld", tribe:"val", archetype:"aeltester",
     strengths:["Herzlich und gastgeberisch","Unnachgiebig, wenn es um faires Teilen geht"], weaknesses:["Kann Kritik am Buffet persönlich nehmen"],
-    goalPersonal:"Das Buffet fair durch den Abend bringen.", goalTribe:"Die Mehrheit der Vallari sichtbar hinter sich versammeln.", goalSecret:"—",
+    goalPersonal:"Das Buffet fair durch den Abend bringen, heimlich aber auch mehr Glut zurücklegen, als sie je zugeben würde — Sicherheit vor Großzügigkeit. Und: sieht Jorys wachsende Nähe zu einer Ferronitin mit Sorge — ein Vallari-Herz gehört für sie nicht über den Graben.", goalTribe:"Die Mehrheit der Vallari sichtbar hinter sich versammeln.", goalSecret:"—",
     tick:"Wischt sich die Hände an der Schürze ab, auch wenn sie sauber sind", ritual:"Zählt den Schlüsselbund, bevor sie einen Raum verlässt"
   },
   "DN6NWJ": {
     name:"Coen Brannigh", tribe:"val", archetype:"stimme",
     strengths:["Gesellig und aufmerksam","Merkt sich jedes Gerücht"], weaknesses:["Kann Gerüchte auch ungewollt weiterverbreiten"],
-    goalPersonal:"Herausfinden, wer wirklich hungert und wer nur so tut.", goalTribe:"Vallari als großzügig, aber nicht naiv zeigen.", goalSecret:"—",
+    goalPersonal:"Herausfinden, wer wirklich hungert und wer nur so tut — notfalls, indem er ein falsches Gerücht über knappe Vorräte streut und beobachtet, wer zuerst in Panik gerät.", goalTribe:"Vallari als großzügig, aber nicht naiv zeigen.", goalSecret:"—",
     tick:"Wiederholt das letzte Wort eines Satzes leise nach", ritual:"Füllt den Krug nach, sobald er halb leer ist"
   },
   "4B2RUD": {
     name:"Wilna Krug", tribe:"val", archetype:"skeptiker",
     strengths:["Scharfzüngig, wird für ehrlich gehalten"], weaknesses:["Ihr offener Zweifel ist auch eine Tarnung"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als kritische, aber loyale Stimme gelten.", goalSecret:"Kettenglied der Asche — nächstes Glied nach Ilse, davor Aurin.",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als kritische, aber loyale Stimme gelten.", goalSecret:"Kettenglied der Asche — nächstes Glied nach Ilse, davor Aurin. Traut weder dem Erwachen noch dem Mitklang — für sie ist jede große Verheißung zuerst ein Verdacht.",
     tick:"Verzieht das Gesicht, bevor sie widerspricht", ritual:"Berührt kurz das Amulett unter dem Schal"
   },
   "8PCUK5": {
     name:"Jory Amsel", tribe:"val", archetype:"lehrling",
     strengths:["Hilfsbereit bis zur Selbstaufgabe"], weaknesses:["Lernt oft nur durch Zuschauen, zögert bei eigenen Entscheidungen"],
-    goalPersonal:"Berhtas Vertrauen gewinnen.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Berhtas Vertrauen gewinnen — auch wenn das schwerer wird, sollte Berhta erfahren, wie viel ihm an Tamin Ohrwerk von den Ferroniten liegt.", goalTribe:"—", goalSecret:"—",
     tick:"Nickt zu schnell zu allem, was Berhta sagt", ritual:"Bäckt heimlich, wenn er nervös ist"
   },
   "XW76NV": {
     name:"Petra Lindwurm", tribe:"val", archetype:"hueter",
     strengths:["Fürsorglich und verlässlich"], weaknesses:["Verschwiegen über die eigene Herkunft"],
-    goalPersonal:"Die Herkunft der Samen für sich behalten.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Die Herkunft der Samen für sich behalten — und am Ende mehr Glut besitzen als zu Beginn, damit sich ihre Vorsicht auch auszahlt.", goalTribe:"—", goalSecret:"—",
     tick:"Hält das Samenbündel fest, wenn das Gespräch persönlich wird", ritual:"Gräbt jeden Abend eine Handvoll Erde um, aus Gewohnheit"
   },
   "GZCBYH": {
@@ -212,79 +217,79 @@ const PLAYERS = {
   "3KC6H6": {
     name:"Aurin Thess", tribe:"moy", archetype:"stimme",
     strengths:["Ruhig, liest Vorzeichen, wo andere nur Wetter sehen"], weaknesses:["Wirkt fast entrückt — schwer greifbar für andere"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als verlässliche Seherin des Stammes gelten.", goalSecret:"Kettenglied der Asche — nächstes Glied nach Wilna, davor Doln.",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als verlässliche Seherin des Stammes gelten.", goalSecret:"Kettenglied der Asche — nächstes Glied nach Wilna, davor Doln. Liest in den Vorzeichen etwas, das sie sich selbst nicht eingesteht: dass der Mitklang näher ist, als der Kette lieb wäre.",
     tick:"Blinzelt langsamer, wenn sie 'liest'", ritual:"Wirft vor jeder wichtigen Aussage einen Stein"
   },
   "DPJRX5": {
     name:"Doran Fyk", tribe:"moy", archetype:"skeptiker",
     strengths:["Direkt und entscheidungsfreudig"], weaknesses:["Hält Zögern für Feigheit — auch bei sich selbst"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Das Tor so schnell wie möglich öffnen lassen.", goalSecret:"Gegenbund — erkennt Gleichgesinnte am Satz „Das Licht wartet nicht.“",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Das Tor so schnell wie möglich öffnen lassen.", goalSecret:"Gegenbund — glaubt, dass nur das Erwachen Thalvaràn retten kann, und erkennt Gleichgesinnte am Satz „Das Licht wartet nicht.“",
     tick:"Trommelt ungeduldig mit den Fingern", ritual:"Stellt die tote Uhr jeden Abend neu — auf eine andere Zeit"
   },
   "NFNNGY": {
     name:"Sil Marrow", tribe:"moy", archetype:"lehrling",
     strengths:["Neugierig und furchtlos"], weaknesses:["Unbekümmert bis zur Leichtsinnigkeit"],
-    goalPersonal:"Einen eigenen Weg finden, der noch niemandem gehört.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Die eigene, ungenaue Karte durch Gespräche mit Mitgliedern von mindestens drei anderen Stämmen korrigieren — der Weg, der dabei entsteht, gehört dann wirklich nur ihr.", goalTribe:"—", goalSecret:"—",
     tick:"Kritzelt neue Wege auf die eigene Karte", ritual:"Berührt beim Abschied immer kurz den Boden"
   },
   "JZ8YXC": {
     name:"Renna Ashcombe", tribe:"moy", archetype:"hueter",
     strengths:["Beschützend und loyal"], weaknesses:["Wortkarg über die eigene Vergangenheit"],
-    goalPersonal:"Herausfinden, wofür ihr Schlüssel heute noch passt.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Die anderen Mor'Yen-Mitglieder fragen, ob ihnen ein altes Tor bekannt ist, das ihr Schlüssel noch öffnen könnte.", goalTribe:"—", goalSecret:"—",
     tick:"Hält die Hand instinktiv an den Schlüssel um den Hals", ritual:"Prüft jedes Tor, an dem sie vorbeikommt, testweise"
   },
   "WXFU2H": {
     name:"Torvin Rhen", tribe:"rhu", archetype:"aeltester",
     strengths:["Kommandierend, respektiert Stärke"], weaknesses:["Verachtet Zögern, auch wenn es angebracht wäre"],
-    goalPersonal:"Respekt behalten, ohne ihn erzwingen zu müssen.", goalTribe:"Die Klingen als Stimme der Entschlossenheit zeigen.", goalSecret:"—",
+    goalPersonal:"Respekt behalten, ohne ihn erzwingen zu müssen — und dafür sorgen, dass sein Stamm am Ende nie weniger Glut besitzt als die anderen sechs.", goalTribe:"Die Klingen als Stimme der Entschlossenheit zeigen.", goalSecret:"—",
     tick:"Legt die Hand an die Klinge, wenn er überzeugen will", ritual:"Poliert die stumpfe Klinge jeden Abend, obwohl sie nie stumpf wird"
   },
   "FRPJ8X": {
     name:"Kael Dross", tribe:"rhu", archetype:"stimme",
     strengths:["Aufmerksam und taktisch"], weaknesses:["Spricht wenig — wird leicht übersehen"],
-    goalPersonal:"Herausfinden, wer im Raum am meisten zu verlieren hat.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Ein Gerücht über eine beliebige Person im Raum in Umlauf bringen und beobachten, wer am nervösesten reagiert — das verrät, wer am meisten zu verlieren hat.", goalTribe:"—", goalSecret:"—",
     tick:"Spricht in kurzen, abgehackten Sätzen", ritual:"Schüttelt den Kompass, obwohl er weiß, dass es nichts bringt"
   },
   "ZUHYM5": {
     name:"Yrsa Bolt", tribe:"rhu", archetype:"skeptiker",
     strengths:["Laut, aber ehrlich in der Sache"], weaknesses:["Militant im Ton — wird oft falsch verstanden"],
-    goalPersonal:"Beweisen, dass Härte nicht dasselbe ist wie Grausamkeit.", goalTribe:"Die Klingen von Rhûn vor Naivität bewahren.", goalSecret:"—",
+    goalPersonal:"Beweisen, dass Härte nicht dasselbe ist wie Grausamkeit — indem sie ein übertriebenes Gerücht über die eigene Strenge zulässt und beobachtet, wer trotzdem zu ihr hält.", goalTribe:"Die Klingen von Rhûn vor Naivität bewahren.", goalSecret:"—",
     tick:"Lacht zu laut, wenn es unpassend ist", ritual:"Trägt das Kettenhemd-Fragment immer sichtbar, nie versteckt"
   },
   "33BH5B": {
     name:"Finn Draeg", tribe:"rhu", archetype:"lehrling",
     strengths:["Ehrgeizig und lernwillig"], weaknesses:["Ungeduldig mit sich selbst"],
-    goalPersonal:"Von Torvin als vollwertig anerkannt werden.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Von Torvin als vollwertig anerkannt werden. Und: verbringt in Gedanken mehr Zeit bei Nissa Warm von den Solari, als ein Klingen-Lernling zugeben sollte.", goalTribe:"—", goalSecret:"—",
     tick:"Übt Bewegungen mit dem Holzschwert, wenn er wartet", ritual:"Fragt nach jeder Trainingseinheit, ob er besser wird"
   },
   "4MPJCG": {
     name:"Mabel Sceld", tribe:"rhu", archetype:"hueter",
     strengths:["Wirkt wie die Ruhigste im Raum"], weaknesses:["Genau deshalb traut ihr niemand etwas zu — sie nutzt das aus"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"—", goalSecret:"Gegenbund — Erkennungssatz „Das Licht wartet nicht.“",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"—", goalSecret:"Gegenbund — Erkennungssatz „Das Licht wartet nicht.“ Trägt nach außen die Karte des Mitklangs, glaubt aber insgeheim nur an das Tor.",
     tick:"Spricht auffällig leise", ritual:"Zählt die Botenpfeile jeden Abend nach, obwohl sich die Zahl nie ändert"
   },
   "89V7ZM": {
     name:"Registrar Holt", tribe:"axi", archetype:"aeltester",
     strengths:["Akribisch und unbestechlich im Amt"], weaknesses:["Glaubt an das Verzeichnis mehr als an Menschen"],
-    goalPersonal:"Das Verzeichnis vollständig halten.", goalTribe:"Die Axiomaten als unbestechliche Instanz zeigen.", goalSecret:"—",
+    goalPersonal:"Das Verzeichnis vollständig halten — und am Ende des Abends mehr Glut besitzen als jeder andere Älteste, ein stiller Beweis axiomatischer Überlegenheit.", goalTribe:"Die Axiomaten als unbestechliche Instanz zeigen.", goalSecret:"—",
     tick:"Korrigiert kleine Ungenauigkeiten sofort, unaufgefordert", ritual:"Trägt das Verzeichnis auch dann bei sich, wenn es niemand braucht"
   },
   "GXSP78": {
     name:"Vantis Roh", tribe:"axi", archetype:"skeptiker",
     strengths:["Ehrlich misstrauisch"], weaknesses:["Unterschätzt sich selbst systematisch"],
-    goalPersonal:"Den einen Fehler im System finden, der alles erklärt.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Die inoffiziellen Kopien der Axiomaten-Folge im eigenen Stamm miteinander vergleichen — ein Glied darunter passt nicht zu den anderen.", goalTribe:"—", goalSecret:"—",
     tick:"Putzt die Lupe, statt zu antworten", ritual:"Stellt jede Behauptung zweimal in Frage"
   },
   "XREJEH": {
     name:"Sera Klemm", tribe:"axi", archetype:"lehrling",
     strengths:["Talentiert und ehrgeizig"], weaknesses:["Trägt eine leise Bitterkeit über ihren Ausschluss"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"—", goalSecret:"Gegenbund — will beweisen, dass ihr Ausschluss von der Zwischenklang-Karte ein Fehler war, notfalls mit falschen Mitteln.",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"—", goalSecret:"Gegenbund — seit ihrem Ausschluss von der Zwischenklang-Karte glaubt sie nicht mehr an den Mitklang, sondern nur noch ans Erwachen, notfalls mit falschen Mitteln.",
     tick:"Verschränkt die Arme, wenn die Zwischenklang-Karte erwähnt wird", ritual:"Rechnet die Folge nachts heimlich neu durch"
   },
   "2UUJ2V": {
     name:"Doln Aschgrau", tribe:"axi", archetype:"hueter",
     strengths:["Freundlich und hilfsbereit — wird nie verdächtigt"], weaknesses:["Trägt die schwerste Last der Asche mit sich"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"—", goalSecret:"Kettenglied der Asche — nächstes Glied nach Aurin, davor Amara.",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"—", goalSecret:"Kettenglied der Asche — nächstes Glied nach Aurin, davor Amara. Sein gefälschtes Glied gilt allein der Axiomaten-Folge — insgeheim wünscht er sich, dass am Ende nicht das Tor, sondern der Mitklang der Stämme steht.",
     tick:"Lächelt freundlich, auch wenn es unpassend wäre", ritual:"Berührt die versiegelte Kapsel, wenn das Gespräch zu nah kommt"
   },
   "Q7VPNH": {
@@ -302,19 +307,19 @@ const PLAYERS = {
   "6DEXF4": {
     name:"Toma Reed", tribe:"myr", archetype:"lehrling",
     strengths:["Still und beobachtend"], weaknesses:["Fühlt sich oft übersehen"],
-    goalPersonal:"Einen eigenen Platz im Stamm finden.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Das eigene, leere Notizbuch mit den Geschichten von mindestens drei Myrrhiden füllen — erst dann hat sie ihren Platz im Stamm gefunden.", goalTribe:"—", goalSecret:"—",
     tick:"Schreibt alles mit, spricht aber selten", ritual:"Liest die eigenen Notizen abends nochmal durch, ganz allein"
   },
   "YQWCPP": {
     name:"Lior Sandkeep", tribe:"sol", archetype:"aeltester",
     strengths:["Die ruhigste Instanz im Raum"], weaknesses:["Ungeduldig im Verborgenen — ganz anders, als er wirkt"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Solari als geduldigste Kraft der Vermittlung zeigen — nach außen.", goalSecret:"Gegenbund — Erkennungssatz „Das Licht wartet nicht.“",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Solari als geduldigste Kraft der Vermittlung zeigen — nach außen.", goalSecret:"Gegenbund — Erkennungssatz „Das Licht wartet nicht.“ Der geduldigste Fürsprecher des Erwachens im Rat — seine Ruhe ist Überzeugung, keine Zurückhaltung.",
     tick:"Lächelt geduldig, selbst wenn es ihn innerlich zerreißt", ritual:"Lässt die Lichtschale nie ganz erlöschen, auch nachts nicht"
   },
   "WRTJU6": {
     name:"Amara Vell", tribe:"sol", archetype:"stimme",
     strengths:["Warmherzig und überzeugend"], weaknesses:["Glaubt selbst fast an das, was sie vorgibt"],
-    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als aufrichtigste Vermittlerin des Abends gelten.", goalSecret:"Schließt den Ring der Asche zu Soran.",
+    goalPersonal:"Unentdeckt bleiben.", goalTribe:"Als aufrichtigste Vermittlerin des Abends gelten.", goalSecret:"Schließt den Ring der Asche zu Soran. Glaubt fest daran, dass weder das Erwachen noch ein Mitklang der Stämme etwas Gutes bringt — nur die Asche schützt Thalvaràn vor sich selbst. Ihr Mittel dafür: ein Gerücht in Umlauf bringen, das zwei Stämme gegeneinander aufbringt, bevor sie zueinanderfinden.",
     tick:"Legt beim Sprechen sanft die Hand auf den Arm des Gegenübers", ritual:"Bricht das Licht am Amulett, bevor sie eine schwierige Wahrheit sagt"
   },
   "9AY2DY": {
@@ -326,13 +331,13 @@ const PLAYERS = {
   "7U3J3X": {
     name:"Nissa Warm", tribe:"sol", archetype:"lehrling",
     strengths:["Offen und hoffnungsvoll"], weaknesses:["Glaubt manchmal zu fest an einfache Lösungen"],
-    goalPersonal:"Einen eigenen Weg zwischen den Stämmen finden.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Das Glasstück gegen das Licht von drei verschiedenen Stämmen halten und vergleichen, wie es sich bricht — ihr eigener Weg zeigt sich erst im Kontrast. Und: sie hat für Finn Draeg von den Klingen von Rhûn mehr übrig, als sie zugeben würde.", goalTribe:"—", goalSecret:"—",
     tick:"Lächelt zu schnell, wenn sie nervös ist", ritual:"Hält das Glasstück gegen jede Lichtquelle, die sie findet"
   },
   "MDKQFR": {
     name:"Beck Aurel", tribe:"sol", archetype:"hueter",
     strengths:["Geduldig und aufmerksam"], weaknesses:["Hält sich stark zurück, auch wenn Klarheit nötig wäre"],
-    goalPersonal:"Herausfinden, wofür die Kapsel eigentlich gedacht war.", goalTribe:"—", goalSecret:"—",
+    goalPersonal:"Lior direkt fragen, woher die Lichtkapsel stammt, die niemand außer ihm öffnen kann — auch wenn Älteste selten offen antworten.", goalTribe:"—", goalSecret:"—",
     tick:"Spricht auffällig bedächtig, mit Pausen", ritual:"Prüft abends, ob die Lichtkapsel noch verschlossen ist"
   }
 };
@@ -375,6 +380,44 @@ const STARTER_ITEMS = {
   "MDKQFR": "Eine Lichtkapsel, die niemand außer ihm öffnen kann"
 };
 
+const SCHUERF_FRAGMENTS = [
+  {id:"s01",a:"7UCVQB",b:"93MDCP",cat:"nahrung",task:"Tauscht eine Erinnerung, die euch beide etwas gekostet hat.",text:"Was gemeinsam verwaltet wird, gehört erst dann jemandem, wenn alle wissen, wie viel noch da ist."},
+  {id:"s02",a:"93MDCP",b:"GZCBYH",cat:"eigentum",task:"Nennt euch je eine Sache, die ihr am eigenen Stamm nicht versteht.",text:"Ein Weg gehört dem, der ihn zuerst sicher gemacht hat — nicht dem, der ihn zuerst betrat."},
+  {id:"s03",a:"GZCBYH",b:"WXFU2H",cat:"verletzte",task:"Gebt euch ein Zeichen, das ihr euch den Abend über wiedererkennt.",text:"Wer schweigend leidet, wird genauso versorgt wie der, der laut klagt."},
+  {id:"s04",a:"WXFU2H",b:"89V7ZM",cat:"konflikt",task:"Sagt in einem Satz, was ihr am Graben zwischen euren Stämmen für falsch haltet.",text:"Ein Streit endet nicht mit dem lauteren Wort, sondern mit der klareren Zahl."},
+  {id:"s05",a:"89V7ZM",b:"XDA2JH",cat:"erbe",task:"Tauscht ein Gerücht über den jeweils anderen Stamm — wahr oder nicht.",text:"Was verzeichnet wurde, überdauert den, der es aufgeschrieben hat."},
+  {id:"s06",a:"XDA2JH",b:"YQWCPP",cat:"kinder",task:"Erklärt einander eine Regel eures Stammes, die der andere vermutlich nicht kennt.",text:"Ein Kind lernt zuerst, wem es vertrauen darf — erst danach, wem es glauben soll."},
+  {id:"s07",a:"YQWCPP",b:"AUGZXZ",cat:"geheimnis",task:"Tauscht eine Erinnerung, die euch beide etwas gekostet hat.",text:"Ein Geheimnis, das ein ganzes Volk trägt, wiegt anders als eines, das ein Einzelner verbirgt."},
+  {id:"s08",a:"AUGZXZ",b:"DN6NWJ",cat:"fuehrung",task:"Nennt euch je eine Sache, die ihr am eigenen Stamm nicht versteht.",text:"Wer die Schwachstelle im System kennt, trägt auch die Pflicht, sie zu nennen."},
+  {id:"s09",a:"DN6NWJ",b:"3KC6H6",cat:"fremde",task:"Gebt euch ein Zeichen, das ihr euch den Abend über wiedererkennt.",text:"Wer ein Gerücht weiterträgt, haftet für das, was es anrichtet, so gut wie der, der es erfand."},
+  {id:"s10",a:"3KC6H6",b:"FRPJ8X",cat:"arbeit",task:"Sagt in einem Satz, was ihr am Graben zwischen euren Stämmen für falsch haltet.",text:"Wer die Zeichen liest, bevor andere sie sehen, schuldet ihnen die Warnung, nicht nur das Wissen."},
+  {id:"s11",a:"FRPJ8X",b:"ACGHTW",cat:"nahrung",task:"Tauscht ein Gerücht über den jeweils anderen Stamm — wahr oder nicht.",text:"Was gezählt wird, muss auch geteilt werden — sonst ist Zählen nur eine andere Form des Behaltens."},
+  {id:"s12",a:"ACGHTW",b:"Q7VPNH",cat:"eigentum",task:"Erklärt einander eine Regel eures Stammes, die der andere vermutlich nicht kennt.",text:"Eine Zahl gehört niemandem — aber wer sie zuerst ausspricht, trägt die Verantwortung für ihre Wirkung."},
+  {id:"s13",a:"Q7VPNH",b:"WRTJU6",cat:"verletzte",task:"Tauscht eine Erinnerung, die euch beide etwas gekostet hat.",text:"Ein Ton, der Trost geben soll, darf nicht zugleich verschweigen, was wehtut."},
+  {id:"s14",a:"WRTJU6",b:"UQHRVJ",cat:"konflikt",task:"Nennt euch je eine Sache, die ihr am eigenen Stamm nicht versteht.",text:"Wer im Streit zu schnell Trost anbietet, verhindert oft die eigentliche Klärung."},
+  {id:"s15",a:"UQHRVJ",b:"4B2RUD",cat:"erbe",task:"Gebt euch ein Zeichen, das ihr euch den Abend über wiedererkennt.",text:"Was durchgestrichen wurde, zählt trotzdem — Fehler gehören zur Geschichte, nicht nur die Erfolge."},
+  {id:"s16",a:"4B2RUD",b:"DPJRX5",cat:"kinder",task:"Sagt in einem Satz, was ihr am Graben zwischen euren Stämmen für falsch haltet.",text:"Zweifel ist kein Mangel an Vertrauen, sondern eine Form, es ernst zu nehmen."},
+  {id:"s17",a:"DPJRX5",b:"ZUHYM5",cat:"geheimnis",task:"Tauscht ein Gerücht über den jeweils anderen Stamm — wahr oder nicht.",text:"Eine tote Uhr zeigt trotzdem etwas — nur nicht die Zeit, sondern was jemand ihr bedeutet."},
+  {id:"s18",a:"ZUHYM5",b:"GXSP78",cat:"fuehrung",task:"Erklärt einander eine Regel eures Stammes, die der andere vermutlich nicht kennt.",text:"Wer zu laut lacht, hat oft am meisten Angst, ernst genommen zu werden."},
+  {id:"s19",a:"GXSP78",b:"ETSC3B",cat:"fremde",task:"Tauscht eine Erinnerung, die euch beide etwas gekostet hat.",text:"Ein Beweis, der niemanden überzeugt, ist noch kein falscher Beweis — nur ein unvollständiger."},
+  {id:"s20",a:"ETSC3B",b:"9AY2DY",cat:"arbeit",task:"Nennt euch je eine Sache, die ihr am eigenen Stamm nicht versteht.",text:"Wer an der eigenen Aufgabe zweifelt, arbeitet oft gründlicher als der, der sie für selbstverständlich hält."},
+  {id:"s21",a:"9AY2DY",b:"46A34F",cat:"nahrung",task:"Gebt euch ein Zeichen, das ihr euch den Abend über wiedererkennt.",text:"Geduld, die man einfordert, ist etwas anderes als Geduld, die man selbst aufbringt."},
+  {id:"s22",a:"46A34F",b:"8PCUK5",cat:"eigentum",task:"Sagt in einem Satz, was ihr am Graben zwischen euren Stämmen für falsch haltet.",text:"Ein Werkzeug ohne Zeiger zeigt trotzdem, wie viel Zeit jemand hineingesteckt hat, es zu bauen."},
+  {id:"s23",a:"8PCUK5",b:"NFNNGY",cat:"verletzte",task:"Tauscht ein Gerücht über den jeweils anderen Stamm — wahr oder nicht.",text:"Wer zu schnell zustimmt, verbirgt oft eine Unsicherheit, die genauso viel Aufmerksamkeit verdient wie ein offener Zweifel."},
+  {id:"s24",a:"NFNNGY",b:"33BH5B",cat:"konflikt",task:"Erklärt einander eine Regel eures Stammes, die der andere vermutlich nicht kennt.",text:"Ein Weg, den niemand vorher ging, ist nicht automatisch ein falscher Weg."},
+  {id:"s25",a:"33BH5B",b:"XREJEH",cat:"erbe",task:"Tauscht eine Erinnerung, die euch beide etwas gekostet hat.",text:"Was man üben muss, um es zu beherrschen, gehört einem am Ende mehr als das, was einem gegeben wurde."},
+  {id:"s26",a:"XREJEH",b:"6DEXF4",cat:"kinder",task:"Nennt euch je eine Sache, die ihr am eigenen Stamm nicht versteht.",text:"Ausschluss, der nie erklärt wurde, hinterlässt mehr Zweifel als jede offen ausgesprochene Ablehnung."},
+  {id:"s27",a:"6DEXF4",b:"7U3J3X",cat:"geheimnis",task:"Gebt euch ein Zeichen, das ihr euch den Abend über wiedererkennt.",text:"Wer alles mitschreibt und wenig sagt, bewahrt oft mehr, als er zeigt."},
+  {id:"s28",a:"7U3J3X",b:"ZQMJEG",cat:"fuehrung",task:"Sagt in einem Satz, was ihr am Graben zwischen euren Stämmen für falsch haltet.",text:"Ein zu schnelles Lächeln verrät oft mehr Unsicherheit als ein ehrliches Zögern."},
+  {id:"s29",a:"ZQMJEG",b:"XW76NV",cat:"fremde",task:"Tauscht ein Gerücht über den jeweils anderen Stamm — wahr oder nicht.",text:"Wer zu lange lächelt, verbirgt manchmal genau das, was ein offenes Gesicht zeigen sollte."},
+  {id:"s30",a:"XW76NV",b:"JZ8YXC",cat:"arbeit",task:"Erklärt einander eine Regel eures Stammes, die der andere vermutlich nicht kennt.",text:"Herkunft, die man für sich behält, verpflichtet trotzdem zu dem, was aus ihr wächst."},
+  {id:"s31",a:"JZ8YXC",b:"4MPJCG",cat:"nahrung",task:"Tauscht eine Erinnerung, die euch beide etwas gekostet hat.",text:"Ein Schlüssel, der zu keinem bekannten Tor mehr passt, ist trotzdem ein Versprechen, nicht nur ein Andenken."},
+  {id:"s32",a:"4MPJCG",b:"2UUJ2V",cat:"eigentum",task:"Nennt euch je eine Sache, die ihr am eigenen Stamm nicht versteht.",text:"Wer leise spricht, wird oft überhört — nicht, weil er wenig zu sagen hat, sondern weil ihm niemand zuhört."},
+  {id:"s33",a:"2UUJ2V",b:"HE2DY2",cat:"verletzte",task:"Gebt euch ein Zeichen, das ihr euch den Abend über wiedererkennt.",text:"Ein Lächeln, das nie zum Anlass passt, ist manchmal die einzige Art, wie jemand um Hilfe bittet."},
+  {id:"s34",a:"HE2DY2",b:"MDKQFR",cat:"konflikt",task:"Sagt in einem Satz, was ihr am Graben zwischen euren Stämmen für falsch haltet.",text:"Wer genau zuhört, bevor er antwortet, verhindert mehr Streit als jeder, der zuerst spricht."},
+  {id:"s35",a:"MDKQFR",b:"7UCVQB",cat:"erbe",task:"Tauscht ein Gerücht über den jeweils anderen Stamm — wahr oder nicht.",text:"Bedächtigkeit, die man für Zögern hält, ist manchmal die gründlichste Form von Klarheit."}
+];
+
 const CARD_POOL = [
   {id:'kreisbefehl', name:'Kreisbefehl', type:'Macht', tribe:'fer', cost:0, effect:'Setzt den Ferroniten-Kreis (Erwachensschritt I) einen Schritt weiter.'},
   {id:'folgenglied', name:'Folgenglied', type:'Wissen', tribe:'axi', cost:0, effect:'Legt ein Glied der Axiomaten-Folge offen.'},
@@ -382,9 +425,9 @@ const CARD_POOL = [
   {id:'torimpuls', name:'Torimpuls', type:'Macht', tribe:'moy', cost:0, effect:'Bewegt das Mor’Yen-Tor einen Schritt Richtung Öffnung.'},
   {id:'buffetschluessel', name:'Buffet-Schlüssel', type:'Bindung', tribe:'val', cost:0, effect:'Hebt ein Buffet-Embargo für deinen Tisch auf.'},
   {id:'wegzeichen', name:'Wegzeichen', type:'Druck', tribe:'rhu', cost:0, effect:'Erzwingt eine sofortige Antwort von einer Person deiner Wahl.'},
-  {id:'gluthauch', name:'Gluthauch', type:'Schild', tribe:'sol', cost:1, effect:'Schützt einen angenommenen Kodex-Satz vor erneuter Anfechtung.'},
+  {id:'gluthauch', name:'Gluthauch', type:'Schild', tribe:'sol', cost:1, effect:'Schützt ein angenommenes Kodex-Fragment vor erneuter Anfechtung.'},
   {id:'lauschen', name:'Lauschen', type:'List', tribe:null, cost:1, effect:'Du hörst ein Gespräch im Nebenraum mit.'},
-  {id:'zwischenklang', name:'Zwischenklang', type:'Bindung', tribe:null, archetype:'lehrling', cost:0, effect:'Schaltet eine Kodex-Fusion frei, sobald die nötigen Basissätze stehen.'},
+  {id:'zwischenklang', name:'Zwischenklang', type:'Bindung', tribe:null, archetype:'lehrling', cost:0, effect:'Schaltet einen Zwischenklang frei, sobald die nötigen Basissätze stehen.'},
   {id:'ratsstimme', name:'Ratsstimme', type:'Macht', tribe:null, archetype:'aeltester', cost:0, effect:'Deine Stimme zählt doppelt bei einer Stammesentscheidung.'},
   {id:'widerstand', name:'Widerstand', type:'Zweifel', tribe:null, archetype:'skeptiker', cost:0, effect:'Verzögert eine laufende Kodex-Abstimmung um eine Runde.'},
 
@@ -466,35 +509,124 @@ const FUSIONS = [
 ];
 
 // ---------- Storage ----------
-// Fallback: window.storage existiert nur innerhalb einer echten Claude-Artifact-Umgebung.
-// Für Standalone-Nutzung (eigenes Hosting, lokale Vorschau) weicht dies auf einen
-// simplen In-Memory-Speicher aus, damit die App überall lauffähig bleibt.
-const _memStore = {}; const GAMESTATE_ENDPOINT = "https://script.google.com/macros/s/AKfycbzQkYXCCMGs04WUgHgfiw4WI3c07UNEBEOIb4JHbm02ovmpjWGG1EuO1q1hTWJxbZcf/exec"; let _gsCache=null; async function _gsLoadAll(){ try{ const r=await fetch(GAMESTATE_ENDPOINT+'?gsAction=getAll'); _gsCache=await r.json(); }catch(e){ _gsCache=_gsCache||{}; } }
+// PRIVAT (pro Gerät, z.B. eigener Code/GM-Status): echtes localStorage.
+// Bleibt auf diesem Gerät auch nach einem Reload erhalten — kein Backend nötig.
+//
+// GETEILT (Spielzustand, für alle Geräte sichtbar): Firebase Realtime Database.
+// ============================================================================
+// FIREBASE-SETUP (einmalig, von Claude in Chrome durchzuführen):
+// 1. https://console.firebase.google.com/ -> "Projekt hinzufügen" -> Namen vergeben.
+// 2. Im Projekt: "Build" -> "Realtime Database" -> "Datenbank erstellen".
+//    Standort z.B. Europe. Sicherheitsregeln zunächst im Testmodus (siehe unten).
+// 3. Projekteinstellungen (Zahnrad) -> "Allgemein" -> ganz unten "Meine Apps"
+//    -> Web-App hinzufügen (</> Symbol) -> Firebase gibt ein Config-Objekt aus.
+// 4. Die sieben Werte unten bei FIREBASE_CONFIG eintragen.
+// 5. In der Realtime Database unter "Regeln" folgendes eintragen (offen für dieses
+//    private Ein-Abend-Event, da niemand außerhalb den Link kennt):
+//      { "rules": { "shared": { ".read": true, ".write": true } } }
+// 6. Diese Datei danach neu hochladen (überschreiben) — ab dann läuft alles
+//    automatisch über Firebase statt über den Behelfsspeicher.
+// ============================================================================
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+
+let _fbDb = null, _fbTried = false;
+function fbReady(){
+  if(_fbDb) return true;
+  if(_fbTried) return false;
+  _fbTried = true;
+  if(!FIREBASE_CONFIG.databaseURL || typeof firebase === 'undefined') return false;
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    _fbDb = firebase.database();
+    return true;
+  }catch(e){ console.warn('Firebase-Start fehlgeschlagen:', e); return false; }
+}
+
+const _memStore = {}; // nur Behelf, falls weder localStorage noch Firebase verfügbar sind
 function _hasRealStorage(){ return typeof window!=='undefined' && window.storage && typeof window.storage.get==='function'; }
-async function sGet(k,sh){ if(_hasRealStorage()){ try{ const r=await window.storage.get(k,sh); return r?JSON.parse(r.value):null; }catch(e){} } if(sh){ if(!_gsCache) await _gsLoadAll(); return (_gsCache&&Object.prototype.hasOwnProperty.call(_gsCache,k))?_gsCache[k]:null; } try{ const raw=localStorage.getItem('priv:'+k); return raw?JSON.parse(raw):null; }catch(e){ return null; } } async function sSet(k,v,sh){ if(_hasRealStorage()){ try{ await window.storage.set(k,JSON.stringify(v),sh); return; }catch(e){} } if(sh){ if(!_gsCache) _gsCache={}; _gsCache[k]=v; try{ await fetch(GAMESTATE_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({gsAction:'set',key:k,value:v})}); }catch(e){} return; } try{ localStorage.setItem('priv:'+k, JSON.stringify(v)); }catch(e){} }function uid(){ return Math.random().toString(36).slice(2,10); }
+function _hasLocalStorage(){ try{ return typeof localStorage !== 'undefined'; }catch(e){ return false; } }
+
+async function sGet(k, sh){
+  if(!sh){
+    // Privat: gehört nur zu diesem Gerät — nie über Firebase teilen.
+    if(_hasLocalStorage()){
+      try{ const raw = localStorage.getItem('thalvaran:'+k); return raw===null ? null : JSON.parse(raw); }catch(e){}
+    }
+    if(_hasRealStorage()){
+      try{ const r=await window.storage.get(k,false); return r?JSON.parse(r.value):null; }catch(e){}
+    }
+    return Object.prototype.hasOwnProperty.call(_memStore,'priv:'+k) ? JSON.parse(_memStore['priv:'+k]) : null;
+  }
+  // Geteilt: Firebase zuerst (sobald konfiguriert), sonst Claude-Artifact-Storage, sonst Memory (nur Einzelgerät-Tests).
+  if(fbReady()){
+    try{
+      const snap = await _fbDb.ref('shared/'+k).once('value');
+      const raw = snap.val();
+      return (raw===null || raw===undefined) ? null : JSON.parse(raw);
+    }catch(e){ console.warn('Firebase sGet Fehler:', e); }
+  }
+  if(_hasRealStorage()){
+    try{ const r=await window.storage.get(k,true); return r?JSON.parse(r.value):null; }catch(e){}
+  }
+  return Object.prototype.hasOwnProperty.call(_memStore,'shared:'+k) ? JSON.parse(_memStore['shared:'+k]) : null;
+}
+
+async function sSet(k, v, sh){
+  if(!sh){
+    if(_hasLocalStorage()){
+      try{ localStorage.setItem('thalvaran:'+k, JSON.stringify(v)); return; }catch(e){}
+    }
+    if(_hasRealStorage()){
+      try{ await window.storage.set(k, JSON.stringify(v), false); return; }catch(e){}
+    }
+    _memStore['priv:'+k] = JSON.stringify(v);
+    return;
+  }
+  if(fbReady()){
+    try{ await _fbDb.ref('shared/'+k).set(JSON.stringify(v)); return; }catch(e){ console.warn('Firebase sSet Fehler:', e); }
+  }
+  if(_hasRealStorage()){
+    try{ await window.storage.set(k, JSON.stringify(v), true); return; }catch(e){}
+  }
+  _memStore['shared:'+k] = JSON.stringify(v);
+}
+function uid(){ return Math.random().toString(36).slice(2,10); }
 function emptyKodex(){ const k={}; CATEGORIES.forEach(c=>k[c.id]={accepted:[],fusedWith:null}); return k; }
+
 
 let state = {
   identity:null, tab:'profil', gmOpen:false, isGM:false,
   reserve:18.4, events:[], guests:{}, kodex:emptyKodex(), pending:null, fusionUnlocked:false,
   economy:{}, hands:{}, items:{}, chat:[], announcement:null, seenAnnouncementId:null, incapacitated:{},
+  schuerf:{}, schuerfHints:{}, schuerfMatched:{}, schuerfError:{}, gmFusionPayers:{}, gmLog:[], gmLogFilter:{},
   gmDraftCat:CATEGORIES[0].id, gmDraftTribe:'fer', gmReserveInput:'18.4',
   kodexExpanded:null, gmKodexExpanded:null, targetingCard:null,
-  tradeTarget:null, tradeTargetName:null, tradeScanning:false, tradeError:null, votingLock:null
+  tradeTarget:null, tradeTargetName:null, tradeScanning:false, tradeError:null, votingLock:null,
+  infoSub:'abend', whatNowOpen:false, whatNowChoice:null, profileSheetOpen:false, kodexSub:'saetze', erwachen:{kreis:false,folge:false,toeneBy:[],tor:false}
 };
 
-async function loadShared(suppressRenderWhileTyping){
-  if(suppressRenderWhileTyping){
+async function loadShared(quiet){
+  if(quiet){
     const active = document.activeElement;
-    if(active && (active.tagName==='INPUT' || active.tagName==='TEXTAREA')){
-      await loadSharedDataOnly();
-      return;
-    }
+    const typing = active && (active.tagName==='INPUT' || active.tagName==='TEXTAREA');
+    const changed = await loadSharedDataOnly();
+    if(typing || !changed) return;
+    render();
+    return;
   }
   await loadSharedDataOnly();
   render();
 }
-async function loadSharedDataOnly(){ _gsCache=null; await _gsLoadAll();
+let _lastSnapshot = null;
+async function loadSharedDataOnly(){
   const reserve = await sGet('reserve', true);
   const events = await sGet('events', true);
   const guests = await sGet('guests', true);
@@ -508,6 +640,10 @@ async function loadSharedDataOnly(){ _gsCache=null; await _gsLoadAll();
   const announcement = await sGet('announcement', true);
   const incapacitated = await sGet('incapacitated', true);
   const votingLock = await sGet('votingLock', true);
+  const schuerf = await sGet('schuerf', true);
+  const schuerfHints = await sGet('schuerfHints', true);
+  const gmLog = await sGet('gmLog', true);
+  const erwachen = await sGet('erwachen', true);
   if(reserve!==null) state.reserve = reserve.value;
   if(events) state.events = events;
   if(guests) state.guests = guests;
@@ -521,6 +657,18 @@ async function loadSharedDataOnly(){ _gsCache=null; await _gsLoadAll();
   state.announcement = announcement;
   if(incapacitated) state.incapacitated = incapacitated;
   state.votingLock = votingLock;
+  if(schuerf) state.schuerf = schuerf;
+  if(schuerfHints) state.schuerfHints = schuerfHints;
+  if(gmLog) state.gmLog = gmLog;
+  if(erwachen) state.erwachen = erwachen;
+
+  const snapshot = JSON.stringify({reserve:state.reserve, events:state.events, guests:state.guests, kodex:state.kodex,
+    pending:state.pending, fusionUnlocked:state.fusionUnlocked, economy:state.economy, hands:state.hands,
+    items:state.items, chat:state.chat, announcement:state.announcement, incapacitated:state.incapacitated, votingLock:state.votingLock,
+    schuerf:state.schuerf, schuerfHints:state.schuerfHints, gmLog:state.gmLog, erwachen:state.erwachen});
+  const changed = snapshot !== _lastSnapshot;
+  _lastSnapshot = snapshot;
+  return changed;
 }
 async function initSharedIfEmpty(){
   if((await sGet('reserve',true))===null) await sSet('reserve',{value:18.4},true);
@@ -532,6 +680,17 @@ async function initSharedIfEmpty(){
   if((await sGet('items',true))===null) await sSet('items',{},true);
   if((await sGet('chat',true))===null) await sSet('chat',[],true);
   if((await sGet('incapacitated',true))===null) await sSet('incapacitated',{},true);
+  if((await sGet('schuerf',true))===null) await sSet('schuerf',{},true);
+  if((await sGet('schuerfHints',true))===null) await sSet('schuerfHints',{},true);
+  if((await sGet('gmLog',true))===null) await sSet('gmLog',[],true);
+  if((await sGet('erwachen',true))===null) await sSet('erwachen',{kreis:false,folge:false,toeneBy:[],tor:false},true);
+}
+async function logGM(code, type, text){
+  const log=(await sGet('gmLog',true))||[];
+  const p = code ? PLAYERS[code] : null;
+  log.push({id:uid(), ts:Date.now(), code:code||null, name:p?p.name:(code||'—'), tribe:p?p.tribe:null, type, text});
+  if(log.length>600) log.splice(0, log.length-600);
+  await sSet('gmLog', log, true);
 }
 async function pushEvent(text){
   const events=(await sGet('events',true))||[];
@@ -580,7 +739,8 @@ function starterHand(code){
   return hand;
 }
 async function registerGuest(){
-  const guests=(await sGet('guests',true))||{}; const _existingGuest=guests[state.identity.guestId]; const tradeCode=(_existingGuest&&_existingGuest.tradeCode)?_existingGuest.tradeCode:(Math.random().toString(36).slice(2,8).toUpperCase()); state.identity.tradeCode=tradeCode; guests[state.identity.guestId] = {name:state.identity.name, tribe:state.identity.tribe, archetype:state.identity.archetype, tradeCode:tradeCode};
+  const guests=(await sGet('guests',true))||{};
+  guests[state.identity.guestId] = {name:state.identity.name, tribe:state.identity.tribe, archetype:state.identity.archetype};
   await sSet('guests', guests, true);
   const economy=(await sGet('economy',true))||{};
   if(!economy[state.identity.guestId]) economy[state.identity.guestId] = starterEconomy(state.identity.guestId);
@@ -614,6 +774,7 @@ async function gmProposeBasis(catId,tribe){
 }
 async function gmProposeFusion(fid){
   const f=FUSIONS.find(x=>x.id===fid); const cat=CATEGORIES.find(c=>c.id===f.cat);
+  state.gmFusionPayers = {};
   await sSet('pending',{active:true,id:uid(),type:'fusion',catId:f.cat,fusionId:f.id,text:f.text,tribes:f.tribes,votes:{}},true);
   await pushEvent(`Zwischenklang-Versuch: ${cat.name} (${f.tribes.map(t=>TRIBES[t].name).join(' + ')}) liegt zur Abstimmung vor.`);
   await loadShared();
@@ -636,6 +797,12 @@ async function gmSetDeadline(minutes){
   await pushEvent(`Zeitdruck: Die laufende Abstimmung endet in ${minutes} Minuten.`);
   await loadShared();
 }
+function splitEven(total, n){
+  const base = Math.floor(total/n); let rem = total - base*n;
+  const parts = [];
+  for(let i=0;i<n;i++){ parts.push(base + (rem>0?1:0)); if(rem>0) rem--; }
+  return parts;
+}
 async function gmFinalize(accept){
   const pending=await sGet('pending',true); if(!pending||!pending.active) return;
   const kodex=(await sGet('kodex',true))||emptyKodex();
@@ -643,17 +810,67 @@ async function gmFinalize(accept){
     if(pending.type==='basis'){
       if(!kodex[pending.catId].accepted.includes(pending.tribe)) kodex[pending.catId].accepted.push(pending.tribe);
       await pushEvent(`Angenommen: "${pending.text}" (${TRIBES[pending.tribe].name}) steht im Kodex.`);
+      await logGM(null, 'kodex-angenommen', `"${pending.text}" (${TRIBES[pending.tribe].name}, ${CATEGORIES.find(c=>c.id===pending.catId).name}) angenommen.`);
     } else {
+      const f = FUSIONS.find(x=>x.id===pending.fusionId);
+      if(f && f.cost>0){
+        const shares = splitEven(f.cost, f.tribes.length);
+        const economy=(await sGet('economy',true))||{};
+        f.tribes.forEach((t,i)=>{
+          const payer = state.gmFusionPayers[t];
+          if(payer){
+            const eco = economy[payer]||{glut:0,marken:0};
+            eco.glut = Math.max(0, eco.glut - shares[i]);
+            economy[payer] = eco;
+          }
+        });
+        const counts = {};
+        Object.keys(TRIBES).forEach(t=>counts[t]=0);
+        Object.values(kodex).forEach(c=>c.accepted.forEach(t=>counts[t]=(counts[t]||0)+1));
+        const laggingTribes = Object.keys(TRIBES).filter(t=>!f.tribes.includes(t))
+          .sort((a,b)=>(counts[a]||0)-(counts[b]||0)).slice(0,2);
+        laggingTribes.forEach(t=>{
+          const aeltesteEntry = Object.entries(PLAYERS).find(([code,p])=>p.tribe===t && p.archetype==='aeltester');
+          if(aeltesteEntry){
+            const [code] = aeltesteEntry;
+            const eco = economy[code]||{glut:0,marken:0};
+            eco.glut = (eco.glut||0) + 1;
+            economy[code] = eco;
+          }
+        });
+        await sSet('economy', economy, true);
+        for(let i=0;i<f.tribes.length;i++){
+          const t = f.tribes[i];
+          const payer = state.gmFusionPayers[t];
+          if(payer) await logGM(payer, 'fusion-zahlung', `Zahlt ${shares[i]} Glut für Zwischenklang (${TRIBES[t].name}).`);
+        }
+        for(const t of laggingTribes){
+          const aeltesteEntry = Object.entries(PLAYERS).find(([code,p])=>p.tribe===t && p.archetype==='aeltester');
+          if(aeltesteEntry) await logGM(aeltesteEntry[0], 'ausgleichsbonus', `Erhält +1 Glut Ausgleichsbonus (Zwischenklang anderer Stämme).`);
+        }
+      }
       kodex[pending.catId].fusedWith = pending.fusionId;
       await pushEvent(`Zwischenklang gelungen: ${CATEGORIES.find(c=>c.id===pending.catId).name} ist fusioniert.`);
+      await logGM(null, 'fusion', `Zwischenklang: ${CATEGORIES.find(c=>c.id===pending.catId).name} (${f?f.tribes.map(t=>TRIBES[t].name).join(' + '):''}).`);
+      state.gmFusionPayers = {};
     }
-  } else { await pushEvent('Abgelehnt: keine Tragfähigkeit gefunden.'); }
+  } else { await pushEvent('Abgelehnt: keine Tragfähigkeit gefunden.'); await logGM(null, 'abgelehnt', `Abgelehnt: ${pending.text}`); }
   await sSet('kodex', kodex, true);
   await sSet('pending', {active:false}, true);
   await checkFusionUnlock();
   await loadShared();
 }
-async function gmSetReserve(v){ await sSet('reserve',{value:parseFloat(v)},true); await loadShared(); }
+async function gmSetErwachenStep(key, val){
+  const e = (await sGet('erwachen',true)) || {kreis:false,folge:false,toeneBy:[],tor:false};
+  const labels = {kreis:'Ferroniten-Kreis', folge:'Axiomaten-Folge', toene:'Myrrhiden-Töne', tor:"Mor'Yen-Tor"};
+  if(key==='toene'){ e.toeneBy = val ? ['gm','gm','gm'] : []; }
+  else { e[key] = val; }
+  await sSet('erwachen', e, true);
+  await pushEvent(`Spielleitung setzt ${labels[key]} auf "${val?'steht':'offen'}".`);
+  await logGM(null, 'erwachensschritt-gm', `${labels[key]} manuell auf ${val?'steht':'offen'} gesetzt.`);
+  await loadShared();
+}
+async function gmSetReserve(v){ const val = parseFloat(String(v).replace(',','.')); if(isNaN(val)) return; await sSet('reserve',{value:val},true); await logGM(null, 'reserve', `Reserve auf ${val}% gesetzt.`); await loadShared(); }
 async function gmBroadcast(t){
   if(!t.trim()) return;
   await pushEvent(t.trim());
@@ -669,14 +886,100 @@ async function gmAdjustEconomy(guestId, field, delta){
 }
 
 // Guest actions
+function myFragments(code){ return SCHUERF_FRAGMENTS.filter(f=>f.a===code || f.b===code); }
+function partnerOf(frag, code){ return frag.a===code ? frag.b : frag.a; }
+function fragConfirmed(fid){ const s=(state.schuerf||{})[fid]; return s && s.confirmed || {}; }
+function fragStatus(frag){
+  const c = fragConfirmed(frag.id);
+  if(c[frag.a] && c[frag.b]) return 'gefunden';
+  if(Object.keys(c).length>0) return 'unterwegs';
+  return 'offen';
+}
+function schuerfHintText(code, stufe){
+  const p = PLAYERS[code]; if(!p) return '';
+  if(stufe===0) return `Erkennbar an: ${p.tick}`;
+  if(stufe===1){
+    if(!p.ritual || code==='XDA2JH') return `Stamm: ${TRIBES[p.tribe].name} · Funktion: ${ARCHETYPES.find(a=>a.id===p.archetype).name}`;
+    return `Zusätzlich: ${p.ritual}`;
+  }
+  return `Stamm: ${TRIBES[p.tribe].name} · Funktion: ${ARCHETYPES.find(a=>a.id===p.archetype).name}`;
+}
+function myHints(code){ return ((state.schuerfHints||{})[code])||{}; }
+async function buySchuerfHint(fid, stufe){
+  const me = state.identity.guestId;
+  if(isLocked(me)){ lockedAlert(); return; }
+  const cost = stufe===1 ? 1 : 2;
+  const economy=(await sGet('economy',true))||{};
+  const mine = economy[me]||{glut:0,marken:0};
+  if(mine.glut < cost){ alert('Nicht genug Glut.'); return; }
+  mine.glut -= cost; economy[me]=mine;
+  await sSet('economy', economy, true);
+  const hints=(await sGet('schuerfHints',true))||{};
+  hints[me] = hints[me]||{};
+  hints[me][fid] = hints[me][fid]||{};
+  hints[me][fid]['s'+stufe] = true;
+  await sSet('schuerfHints', hints, true);
+  await logGM(me, 'fragment-hinweis', `Kauft Hinweis Stufe ${stufe} für Fragment ${fid} (${cost} Glut).`);
+  await loadShared();
+}
+async function schuerfTryMatch(fid, inputCode){
+  const me = state.identity.guestId;
+  if(isLocked(me)){ lockedAlert(); return; }
+  const frag = SCHUERF_FRAGMENTS.find(f=>f.id===fid);
+  const expected = partnerOf(frag, me);
+  const code = (inputCode||'').trim().toUpperCase();
+  if(code !== expected){
+    state.schuerfError = state.schuerfError||{}; state.schuerfError[fid] = 'Das ist nicht die gesuchte Person für dieses Fragment.'; render();
+    await logGM(me, 'fragment-fehlversuch', `Falscher ID-Code "${code}" für Fragment ${fid}.`);
+    return;
+  }
+  state.schuerfMatched = state.schuerfMatched||{}; state.schuerfMatched[fid] = true;
+  state.schuerfError = state.schuerfError||{}; state.schuerfError[fid] = null;
+  await logGM(me, 'fragment-match', `Findet die richtige Person für Fragment ${fid}.`);
+  render();
+}
+async function schuerfConfirm(fid){
+  const me = state.identity.guestId;
+  if(isLocked(me)){ lockedAlert(); return; }
+  const schuerf=(await sGet('schuerf',true))||{};
+  schuerf[fid] = schuerf[fid]||{confirmed:{}};
+  schuerf[fid].confirmed[me] = true;
+  await sSet('schuerf', schuerf, true);
+  await logGM(me, 'fragment-bestaetigt', `Bestätigt Fragment ${fid}.`);
+  const frag = SCHUERF_FRAGMENTS.find(f=>f.id===fid);
+  if(schuerf[fid].confirmed[frag.a] && schuerf[fid].confirmed[frag.b]){
+    const catName = CATEGORIES.find(c=>c.id===frag.cat).name;
+    await pushEvent(`Fund: ${PLAYERS[frag.a].name} & ${PLAYERS[frag.b].name} — neues Kodex-Fragment (${catName}) entstanden.`);
+    await logGM(null, 'fund', `Fragment ${fid}: ${PLAYERS[frag.a].name} & ${PLAYERS[frag.b].name} (${catName}).`);
+  }
+  await loadShared();
+}
+async function gmForceCompleteFragment(fid){
+  const schuerf=(await sGet('schuerf',true))||{};
+  const frag = SCHUERF_FRAGMENTS.find(f=>f.id===fid);
+  schuerf[fid] = {confirmed:{[frag.a]:true,[frag.b]:true}};
+  await sSet('schuerf', schuerf, true);
+  await pushEvent(`Spielleitung schließt Fragment ${fid} manuell ab.`);
+  await logGM(null, 'gm-fragment-abschluss', `Fragment ${fid} manuell abgeschlossen.`);
+  await loadShared();
+}
+async function gmResetFragment(fid){
+  const schuerf=(await sGet('schuerf',true))||{};
+  schuerf[fid] = {confirmed:{}};
+  await sSet('schuerf', schuerf, true);
+  await pushEvent(`Spielleitung setzt Fragment ${fid} zurück.`);
+  await logGM(null, 'gm-fragment-reset', `Fragment ${fid} zurückgesetzt.`);
+  await loadShared();
+}
+
 async function castVote(choice){
-  const inc=(await sGet('incapacitated',true))||{};
-  if(inc[state.identity.guestId] && inc[state.identity.guestId] > Date.now()){ alert('Du bist gerade handlungsunfähig und kannst nicht abstimmen.'); return; }
+  if(isLocked(state.identity.guestId)){ lockedAlert(); return; }
   const lock=await sGet('votingLock',true);
   if(lock && lock.until > Date.now()){ alert('Die Abstimmung ist gerade pausiert.'); return; }
   const pending=await sGet('pending',true); if(!pending||!pending.active) return;
   pending.votes[state.identity.guestId]=choice;
   await sSet('pending', pending, true);
+  await logGM(state.identity.guestId, 'stimme', `Stimmt "${choice}" ab bei: ${pending.text}`);
   await loadShared();
 }
 function votingLockBanner(){
@@ -686,7 +989,35 @@ function votingLockBanner(){
 }
 function cardNeedsTarget(card){ return card.type==='Einblick' || card.type==='Lähmung' || card.type==='Aderlass'; }
 
+function isLocked(guestId){
+  const inc = state.incapacitated||{};
+  return !!(inc[guestId] && inc[guestId] > Date.now());
+}
+function lockedAlert(){ alert('Du bist gerade gesperrt und kannst gerade nichts tun.'); }
+
+async function gmLockPlayer(guestId, minutes){
+  if(!guestId || !minutes) return;
+  const inc=(await sGet('incapacitated',true))||{};
+  inc[guestId] = Date.now() + minutes*60*1000;
+  await sSet('incapacitated', inc, true);
+  const name = (PLAYERS[guestId]||{}).name || guestId;
+  await pushEvent(`Spielleitung sperrt ${name} für ${minutes} Minuten.`);
+  await logGM(guestId, 'gm-sperre', `Von der Spielleitung für ${minutes} Minuten gesperrt.`);
+  await loadShared();
+}
+async function gmUnlockPlayer(guestId){
+  if(!guestId) return;
+  const inc=(await sGet('incapacitated',true))||{};
+  delete inc[guestId];
+  await sSet('incapacitated', inc, true);
+  const name = (PLAYERS[guestId]||{}).name || guestId;
+  await pushEvent(`Spielleitung hebt die Sperre von ${name} auf.`);
+  await logGM(guestId, 'gm-entsperrung', `Sperre von der Spielleitung aufgehoben.`);
+  await loadShared();
+}
+
 async function playCard(cardId, targetGid){
+  if(isLocked(state.identity.guestId)){ lockedAlert(); return; }
   const card = CARD_POOL.find(c=>c.id===cardId);
   if(cardNeedsTarget(card) && !targetGid){
     state.targetingCard = cardId;
@@ -704,6 +1035,7 @@ async function playCard(cardId, targetGid){
     const targetName = (state.guests[targetGid]||{}).name || 'diese Person';
     await sSet('economy', economy, true);
     await pushEvent(`${state.identity.name} (${TRIBES[state.identity.tribe].name}) nutzt "${card.name}" an ${targetName}.`);
+    await logGM(state.identity.guestId, 'karte-einblick', `Einblick bei ${targetName}.`);
     await loadShared();
     alert(`Fähigkeiten von ${targetName}:\n` + (targetHand.length ? targetHand.join('\n') : '(keine)'));
     state.targetingCard = null;
@@ -717,7 +1049,9 @@ async function playCard(cardId, targetGid){
     await sSet('incapacitated', inc, true);
     await sSet('economy', economy, true);
     const targetName = (state.guests[targetGid]||{}).name || 'diese Person';
-    await pushEvent(`${state.identity.name} (${TRIBES[state.identity.tribe].name}) macht ${targetName} für 5 Minuten handlungsunfähig ("${card.name}").`);
+    await pushEvent(`${state.identity.name} (${TRIBES[state.identity.tribe].name}) sperrt ${targetName} für 5 Minuten ("${card.name}").`);
+    await logGM(state.identity.guestId, 'karte-laehmung', `Lähmt ${targetName} für 5 Min.`);
+    await logGM(targetGid, 'gelaehmt', `Gelähmt durch ${state.identity.name} für 5 Min.`);
     state.targetingCard = null;
     await loadShared();
     return;
@@ -733,6 +1067,30 @@ async function playCard(cardId, targetGid){
     await sSet('economy', economy, true);
     const targetName = (state.guests[targetGid]||{}).name || 'diese Person';
     await pushEvent(`${state.identity.name} (${TRIBES[state.identity.tribe].name}) fordert ${amount} Glut von ${targetName} ("${card.name}").`);
+    await logGM(state.identity.guestId, 'karte-aderlass', `Zieht ${amount} Glut von ${targetName}.`);
+    await logGM(targetGid, 'glut-verloren', `Verliert ${amount} Glut an ${state.identity.name} (Aderlass).`);
+    state.targetingCard = null;
+    await loadShared();
+    return;
+  }
+
+  if(['kreisbefehl','folgenglied','dritterton','torimpuls'].includes(card.id)){
+    const erwachen = (await sGet('erwachen',true)) || {kreis:false,folge:false,toeneBy:[],tor:false};
+    let msg = '';
+    if(card.id==='kreisbefehl'){ erwachen.kreis = true; msg = 'Der Ferroniten-Kreis steht.'; }
+    if(card.id==='folgenglied'){ erwachen.folge = true; msg = 'Die Axiomaten-Folge steht.'; }
+    if(card.id==='torimpuls'){ erwachen.tor = true; msg = 'Das Mor\'Yen-Tor steht.'; }
+    if(card.id==='dritterton'){
+      erwachen.toeneBy = erwachen.toeneBy || [];
+      const me = state.identity.guestId;
+      if(!erwachen.toeneBy.includes(me)) erwachen.toeneBy.push(me);
+      msg = `Ein Ton erklingt am Mor'Yen-Tor (${erwachen.toeneBy.length}/3).`;
+      if(erwachen.toeneBy.length >= 3) msg = 'Alle drei Myrrhiden-Töne erklingen — die Töne stehen.';
+    }
+    await sSet('economy', economy, true);
+    await sSet('erwachen', erwachen, true);
+    await pushEvent(`${state.identity.name} (${TRIBES[state.identity.tribe].name}) spielt "${card.name}" — ${msg}`);
+    await logGM(state.identity.guestId, 'erwachensschritt', `${card.name}: ${msg}`);
     state.targetingCard = null;
     await loadShared();
     return;
@@ -740,10 +1098,12 @@ async function playCard(cardId, targetGid){
 
   await sSet('economy', economy, true);
   await pushEvent(`${state.identity.name} (${TRIBES[state.identity.tribe].name}) spielt "${card.name}".`);
+  await logGM(state.identity.guestId, 'karte', `Spielt "${card.name}"${targetGid?' an '+((PLAYERS[targetGid]||{}).name||targetGid):''}.`);
   state.targetingCard = null;
   await loadShared();
 }
 async function sendChat(text){
+  if(isLocked(state.identity.guestId)){ lockedAlert(); return; }
   if(!text.trim()) return;
   const chat=(await sGet('chat',true))||[];
   chat.push({id:uid(), ts:Date.now(), sender:state.identity.name, tribe:state.identity.tribe, text:text.trim()});
@@ -760,9 +1120,81 @@ function tallyHtml(pending){
     return `<div class="talcell"><span style="color:${TRIBES[t].c}">${TRIBES[t].name}</span><span>${r.ja||0}/${r.nein||0} · ${lean}</span></div>`; }).join('');
 }
 
+function whatNowSuggestions(choice){
+  const me = state.identity.guestId;
+  const id = state.identity;
+  const tribe = id.tribe;
+  const kodex = state.kodex;
+  const out = [];
+
+  function verhandelnTips(){
+    const tips = [];
+    const missing = CATEGORIES.filter(c=>!kodex[c.id].fusedWith && !kodex[c.id].accepted.includes(tribe));
+    missing.slice(0,2).forEach(c=>tips.push(`Bring das Fragment deines Stammes zur Kategorie "${c.name}" ein (Tab „Kodex").`));
+    const readyFusions = FUSIONS.filter(f=>f.tribes.includes(tribe) && !kodex[f.cat].fusedWith && f.tribes.every(t=>kodex[f.cat].accepted.includes(t)));
+    if(readyFusions.length) tips.push(`Ein Zwischenklang ist möglich (${CATEGORIES.find(c=>c.id===readyFusions[0].cat).name}) — sprich mit der Spielleitung.`);
+    if(!tips.length) tips.push(`Sprich mit einem Ältesten deines Stammes über eure Position im Kodex.`);
+    return tips;
+  }
+  function schuerfenTips(){
+    const tips = [];
+    const mine = myFragments(me);
+    const offen = mine.filter(f=>fragStatus(f)==='offen');
+    const unterwegs = mine.filter(f=>fragStatus(f)==='unterwegs' && !fragConfirmed(f.id)[me]);
+    if(unterwegs.length) tips.push(`Du hast ein Fragment, das nur noch deine Bestätigung braucht (Kodex-Tab, „Fragmente suchen").`);
+    if(offen.length) tips.push(`Du hast noch ${offen.length} offene${offen.length===1?'s':''} Halbfragment${offen.length===1?'':'e'} — frag im Raum herum, wer zu deinem Hinweis passt.`);
+    if(!tips.length) tips.push(`Alle deine Fragmente sind gefunden — hilf jemand anderem beim Suchen.`);
+    return tips;
+  }
+  function handelTips(){
+    const tips = [];
+    const eco = state.economy[me]||{glut:0,marken:0};
+    const myHand = state.hands[me]||[];
+    if(eco.glut <= 2) tips.push(`Deine Glut ist knapp (${eco.glut}) — such dir jemanden zum Handeln (Tab „Handel").`);
+    if(myHand.length) tips.push(`Du hast ${myHand.length} ungenutzte Fähigkeitskarte${myHand.length===1?'':'n'} — überleg, ob jetzt ein guter Moment ist (Tab „Karten").`);
+    if(!tips.length) tips.push(`Du stehst wirtschaftlich gut da — biete jemand anderem Hilfe an.`);
+    return tips;
+  }
+  function geheimTips(){
+    const tips = [];
+    if(id.goalSecret && id.goalSecret!=='—') tips.push(`Dein geheimes Ziel: ${id.goalSecret}`);
+    if(id.goalPersonal && id.goalPersonal!=='—') tips.push(`Dein persönliches Ziel: ${id.goalPersonal}`);
+    tips.push(`Nutze deinen Tick oder dein Ritual bewusst in einem Gespräch — das macht deine Rolle glaubhafter.`);
+    return tips;
+  }
+
+  if(choice==='verhandeln') out.push(...verhandelnTips());
+  else if(choice==='schuerfen') out.push(...schuerfenTips());
+  else if(choice==='handel') out.push(...handelTips());
+  else if(choice==='geheim') out.push(...geheimTips());
+  else { out.push(verhandelnTips()[0]); out.push(schuerfenTips()[0]); out.push(handelTips()[0]); }
+
+  return out.slice(0,3);
+}
+function myActionItems(){
+  const me = state.identity.guestId;
+  const items = [];
+  if(isLocked(me)){
+    const secs = Math.ceil((state.incapacitated[me]-Date.now())/1000);
+    items.push(`🔒 Du bist noch ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')} Min. gesperrt.`);
+  }
+  if(state.pending && state.pending.votes && state.pending.votes[me]===undefined){
+    items.push(`🗳 Eine Abstimmung läuft — dein Stimme fehlt noch (Tab „Kodex").`);
+  }
+  myFragments(me).forEach(f=>{
+    const status = fragStatus(f);
+    if(status==='unterwegs' && !fragConfirmed(f.id)[me]){
+      items.push(`⏳ Ein Fragment wartet auf deine Bestätigung (Kodex-Tab, „Fragmente suchen").`);
+    } else if(status==='unterwegs' && fragConfirmed(f.id)[me]){
+      items.push(`⏳ Du wartest auf die Gegenperson bei einem Fragment.`);
+    }
+  });
+  return items;
+}
 function tabProfil(){
   const t = state.identity.tribe;
   const id = state.identity;
+  const actionItems = myActionItems();
   return `
     <div class="card" style="border-left:4px solid ${TRIBES[t].c}">
       <div class="eyebrow">Dein Profil</div>
@@ -770,36 +1202,53 @@ function tabProfil(){
       <div style="color:${TRIBES[t].c};font-size:14px;margin-bottom:4px">${TRIBES[t].name} · ${ARCHETYPES.find(a=>a.id===id.archetype).name}</div>
       <div class="small" style="font-style:italic">"${TRIBES[t].leitsatz}"</div>
     </div>
+    ${actionItems.length ? `<div class="card" style="border-left:3px solid var(--ember)">
+      <div class="eyebrow">Was jetzt?</div>
+      ${actionItems.map(i=>`<div class="small" style="margin-bottom:4px">${i}</div>`).join('')}
+    </div>` : ''}
     <div class="card">
-      <div class="eyebrow">Charakter</div>
-      <div class="small"><b>Stärken</b></div>
-      <ul style="margin:4px 0 10px;padding-left:18px">${(id.strengths||[]).map(s=>`<li class="small">${s}</li>`).join('')}</ul>
-      <div class="small"><b>Schwächen</b></div>
-      <ul style="margin:4px 0 0;padding-left:18px">${(id.weaknesses||[]).map(s=>`<li class="small">${s}</li>`).join('')}</ul>
-    </div>
-    <div class="card">
-      <div class="eyebrow">Eigenheiten</div>
-      <div class="small" style="margin-bottom:6px"><b>Tick</b> — ${id.tick||'—'}</div>
-      <div class="small"><b>Ritual</b> — ${id.ritual||'—'}</div>
-    </div>
-    <div class="card">
-      <div class="eyebrow">Deine Ziele</div>
-      <div class="small" style="margin-bottom:6px"><b>Persönlich</b> — ${id.goalPersonal||'—'}</div>
-      <div class="small" style="margin-bottom:6px"><b>Stamm</b> — ${id.goalTribe && id.goalTribe!=='—' ? id.goalTribe : '—'}</div>
-      ${id.goalSecret && id.goalSecret!=='—' ? `<div class="small" style="color:var(--ember)"><b>Geheim</b> — ${id.goalSecret}</div>` : ''}
-    </div>
-    <div class="card">
-      <div class="eyebrow">Reserve</div>
-      <div class="reserve-outer"><div class="reserve-fill" style="width:${Math.max(0,Math.min(100,state.reserve))}%"></div>
-        <div class="reserve-label">${state.reserve.toFixed(2)} %</div></div>
+      ${!state.whatNowOpen ? `
+        <button class="primary" id="whatNowBtn" style="width:100%">❓ Was soll ich tun?</button>
+      ` : !state.whatNowChoice ? `
+        <div class="eyebrow">Worauf hast du gerade Lust?</div>
+        <button data-c="verhandeln" class="whatNowChoiceBtn" style="display:block;width:100%;margin-bottom:6px;text-align:left">Verhandeln — Fragmente durchbringen</button>
+        <button data-c="schuerfen" class="whatNowChoiceBtn" style="display:block;width:100%;margin-bottom:6px;text-align:left">Fragmente suchen</button>
+        <button data-c="handel" class="whatNowChoiceBtn" style="display:block;width:100%;margin-bottom:6px;text-align:left">Handel — Glut & Karten</button>
+        <button data-c="geheim" class="whatNowChoiceBtn" style="display:block;width:100%;margin-bottom:6px;text-align:left">Meine eigene Geschichte weiterspielen</button>
+        <button data-c="weiss_nicht" class="whatNowChoiceBtn" style="display:block;width:100%;margin-bottom:6px;text-align:left">Ich weiß nicht — überrasch mich</button>
+        <button id="whatNowCancel" style="width:100%">Abbrechen</button>
+      ` : `
+        <div class="eyebrow">Vorschläge für dich</div>
+        ${whatNowSuggestions(state.whatNowChoice).map(s=>`<div class="small" style="margin-bottom:8px">• ${s}</div>`).join('')}
+        <button id="whatNowAgain" style="width:100%">Andere Frage</button>
+      `}
     </div>
     ${state.fusionUnlocked ? `<div class="banner">Zwischenklang ist möglich.</div>` : ''}
     ${votingLockBanner()}
     <div class="card">
+      <div class="catrow" id="profileSheetToggle" style="cursor:pointer">
+        <div class="catname">🎭 Charakterblatt — Ziele, Tick, Ritual</div>
+        <div class="chev">${state.profileSheetOpen?'▾':'▸'}</div>
+      </div>
+      ${state.profileSheetOpen ? `
+        <div style="margin-top:10px">
+          <div class="small" style="margin-bottom:6px"><b>Persönlich</b> — ${id.goalPersonal||'—'}</div>
+          <div class="small" style="margin-bottom:6px"><b>Stamm</b> — ${id.goalTribe && id.goalTribe!=='—' ? id.goalTribe : '—'}</div>
+          ${id.goalSecret && id.goalSecret!=='—' ? `<div class="small" style="color:var(--ember);margin-bottom:10px"><b>Geheim</b> — ${id.goalSecret}</div>` : ''}
+          <div class="small" style="margin-bottom:6px"><b>Tick</b> — ${id.tick||'—'}</div>
+          <div class="small" style="margin-bottom:10px"><b>Ritual</b> — ${id.ritual||'—'}</div>
+          <div class="small"><b>Stärken</b></div>
+          <ul style="margin:4px 0 10px;padding-left:18px">${(id.strengths||[]).map(s=>`<li class="small">${s}</li>`).join('')}</ul>
+          <div class="small"><b>Schwächen</b></div>
+          <ul style="margin:4px 0 0;padding-left:18px">${(id.weaknesses||[]).map(s=>`<li class="small">${s}</li>`).join('')}</ul>
+        </div>
+      ` : ''}
+    </div>
+    <div class="card">
       <div class="eyebrow">Ereignisse</div>
       <div class="feed">${state.events.slice().reverse().map(e=>`<div>${e.text}</div>`).join('')}</div>
     </div>
-    <button class="ghost" id="switchCode" style="width:100%">Code wechseln</button>
+    <button class="ghost" id="switchCode" style="width:100%">Zugangscode wechseln</button>
   `;
 }
 
@@ -809,7 +1258,7 @@ function tabOekonomie(){
     <div class="card">
       <div class="eyebrow">Ökonomie</div>
       <div class="stat"><span>Glut (universelle Währung)</span><span class="statval">${mine.glut}</span></div>
-      <div class="stat"><span>Marken (funktionale Tokens)</span><span class="statval">${mine.marken}</span></div>
+      <div class="stat"><span>Marken (Freischalt-Tokens)</span><span class="statval">${mine.marken}</span></div>
     </div>
     <div class="card small">Glut gilt überall: Gunst, Bestechung, Zugang. Marken schalten bestimmte Fähigkeiten und Aktionen frei.</div>
   `;
@@ -838,16 +1287,112 @@ function tabKarten(){
     </div>
   `;
 }
+const COSTUME_HINTS = {
+  fer:"Kühle Blau-Grau-Töne, klare Linien, Metall- und Industrie-Anklänge. Uniform-artig, aufrecht, wenig Schmuck — Struktur als Statement.",
+  val:"Warme Erdtöne, praktische, gemeinschaftliche Kleidung. Wirkt genutzt, gelebt, gastgeberisch — nicht steif.",
+  moy:"Fließende Stoffe, Violett- und Erdtöne, Reise- und Wanderkleidung. Ein kleines Wegzeichen (Stein, Marke) als Accessoire passt gut.",
+  axi:"Kühles Türkis, klare, fast technische Linien. Etwas Seherisches, Ruhiges — wenig Farbe, viel Präzision.",
+  rhu:"Warmes Gold-Bronze, kriegerisch-elegant. Klingen- oder Waffenmotive nur angedeutet, nicht real.",
+  myr:"Gedämpfte Silbergrau-Töne, still, unauffällig. Zurückhaltung ist hier ein Stilmittel, kein Mangel.",
+  sol:"Warmes Gold, helle, leichte Stoffe. Licht als Motiv — offene Handflächen, wenig Verhülltes."
+};
+const ARCHETYPE_COSTUME = {
+  aeltester:"Vollständigster, schwerster Aufzug deiner Stammesfarbe; ein sichtbares Amtszeichen (Ring, Kette, Siegel).",
+  stimme:"Ein Merkmal an Kopf oder Augen — Schleier, aufgemaltes Zeichen an der Schläfe, ungewöhnlicher Kopfschmuck.",
+  skeptiker:"Bewusst asymmetrische oder unvollständige Tracht — ein Ärmel anders, eine fehlende Schicht.",
+  lehrling:"Einfachste, hellste, unfertigste Version der Tracht — wenig Schmuck, wirkt „im Werden\".",
+  hueter:"Eine sichtbare, aber verschlossene Stelle am Körper — Gürteltasche, umwickeltes Bündel, versiegelte Kette."
+};
+
+function tabInfo(){
+  const subs = [['abend','Der Abend'],['mechanik','Mechanismen'],['kostuem','Kostüm'],['glossar','Glossar'],['roman','Der Roman']];
+  return `
+    <div style="display:flex;flex-wrap:wrap;margin-bottom:12px">
+      ${subs.map(([id,label])=>`<button class="infoSubBtn ${state.infoSub===id?'active':''}" data-sub="${id}" style="margin:0 6px 6px 0;flex:none">${label}</button>`).join('')}
+    </div>
+    ${infoSubContent()}
+  `;
+}
+function infoSubContent(){
+  if(state.infoSub==='abend') return `
+    <div class="card">
+      <div class="eyebrow">Format</div>Immersives Krimi-Dinner im Roaming-Stil — kein festes Sitzen, die Handlung verteilt sich über mehrere Räume.
+      <div class="eyebrow" style="margin-top:10px">Dauer</div>Etwa vier bis fünf Stunden, gegliedert in sechs Akte.
+      <div class="eyebrow" style="margin-top:10px">Verpflegung</div>Ein durchgehendes Buffet, offen über den ganzen Abend.
+      <div class="eyebrow" style="margin-top:10px">Ton</div>Drama, getragen von Humor — ernst genug zum Mitfiebern, leicht genug zum Lachen.
+    </div>
+    <div class="card">
+      <div class="eyebrow">Worum es geht</div>Die Reserve — die Lebenskraft Thalvaràns — sinkt. Nur wenn alle vier Erwachensschritte gleichzeitig stehen, bevor sie auf 0 % fällt, erwacht die Stadt. Eine geheime Zelle, <b>Die Asche</b>, arbeitet dagegen.
+      <div class="eyebrow" style="margin-top:10px">Der Kodex-Auftrag</div>Herzstück des Abends: Die sieben Stämme müssen gemeinsam den Kodex von Thalvaràn aus überlieferten Fragmenten zusammensetzen — jedes Fragment muss von allen sieben getragen werden können.
+    </div>
+    <div class="card"><div class="eyebrow">Das Spiel läuft durch</div>Es gibt keine Auszeit außerhalb der Rolle — auch am Buffet bist du deine Figur.</div>
+  `;
+  if(state.infoSub==='mechanik') return `
+    <div class="card">
+      <div class="eyebrow">Glut</div>Die universelle Währung des Abends. Wer Glut hat, hat Spielraum.
+      <div class="eyebrow" style="margin-top:10px">Marken</div>Freischalt-Tokens. Sie schalten bestimmte Fähigkeiten und Aktionen frei.
+      <div class="eyebrow" style="margin-top:10px">Schlussvotum</div>Am Ende des Abends münden Glut und Marken in eine kollektive Abstimmung.
+    </div>
+    <div class="card"><div class="eyebrow">Fähigkeitskarten</div>Jede Rolle startet mit mehreren Karten. Karten kosten nichts oder Marken und lösen einen konkreten Effekt aus — auch gegenüber anderen Personen.</div>
+    <div class="card"><div class="eyebrow">Das Buffet-Embargo</div>Die Vallari haben Hoheit über das Buffet. Einzelnen Stämmen kann das Begehrenswerte vorübergehend verwehrt werden.</div>
+    <div class="card"><div class="eyebrow">Die vier Erwachensschritte</div>
+      <ul style="margin:6px 0;padding-left:20px"><li>Der Ferroniten-Kreis</li><li>Die Axiomaten-Folge</li><li>Die Myrrhiden-Töne</li><li>Das Mor'Yen-Tor</li></ul>
+    </div>
+  `;
+  if(state.infoSub==='kostuem'){
+    const myTribe = state.identity ? state.identity.tribe : null;
+    const myArch = state.identity ? state.identity.archetype : null;
+    return `
+    <div class="card">Kostüm ist Pflicht — kein Zusatz, sondern Teil deines Auftritts. Je mehr Mühe, desto besser.</div>
+    ${myArch ? `<div class="card" style="border-left:3px solid var(--ember)"><div class="eyebrow">Deine Funktion — ${ARCHETYPES.find(a=>a.id===myArch).name}</div>${ARCHETYPE_COSTUME[myArch]}</div>` : ''}
+    ${Object.keys(TRIBES).map(t=>`<div class="card" style="${t===myTribe?'border-left:3px solid '+TRIBES[t].c:''}"><div class="eyebrow" style="color:${TRIBES[t].c}">${TRIBES[t].name}${t===myTribe?' — dein Stamm':''}</div>${COSTUME_HINTS[t]}</div>`).join('')}
+  `;
+  }
+  if(state.infoSub==='glossar'){
+    const terms = [
+      ['Reserve','Die sinkende Lebenskraft Thalvaràns. Erreicht sie 0 %, bevor alle vier Erwachensschritte stehen, erwacht die Stadt nicht.'],
+      ["Erwachensschritt","Einer von vier Fortschritten (Ferroniten-Kreis, Axiomaten-Folge, Myrrhiden-Töne, Mor'Yen-Tor), die zusammen das Erwachen ermöglichen. Sichtbar für alle oben im Statusbalken. Kann durch verdeckte Sabotage auch wieder zurückgesetzt werden."],
+      ['Kodex','Das gemeinsame Regelwerk, das alle sieben Stämme über den Abend zusammensetzen.'],
+      ['Zwischenklang','Die Verschmelzung mehrerer angenommener Fragmente verschiedener Stämme zu einem gemeinsamen, tieferen Fragment. (Nicht "Fusion" — gleiche Sache, ein Wort.)'],
+      ['Graben','Die historische Kluft zwischen bestimmten Stammespaaren, die ein Zwischenklang überbrücken kann.'],
+      ["Fragmente suchen","Das Aufspüren deiner zwei Halbfragmente im Kodex-Tab — jedes ergibt zusammen mit der Person am anderen Ende ein neues Kodex-Fragment."],
+      ["Fragment","Ein einzelner Kodex-Beitrag — ob von deinem Stamm eingebracht oder über die Fragmentsuche gefunden, beides sind Fragmente."],
+      ["Zugangscode","Dein privater Login-Code, mit dem du dich einmal zu Beginn als deine Figur anmeldest. Nicht vor dem Abend weitergeben."],
+      ["ID-Code","Derselbe Code wie der Zugangscode — aber gemeint, wenn du ihn im Spiel aktiv an andere weitergibst, damit sie dir etwas schicken oder dich bei der Fragmentsuche finden."],
+      ['Fund','Ein erfolgreich abgeschlossenes Schürf-Fragment, bei dem beide Seiten bestätigt haben.'],
+      ['Glut','Die universelle Währung des Abends — Gunst, Bestechung, Zugang.'],
+      ['Marken','Freischalt-Tokens, die bestimmte Fähigkeiten und Aktionen freischalten.'],
+      ['Tragfähig / tragbar','Das Kriterium, nach dem bei einer Abstimmung entschieden wird — nicht Mehrheit, sondern "kann ich das mittragen?"'],
+      ['Rolle','Deine gesamte Figur für den Abend — Name, Geschichte, Ziele.'],
+      ['Funktion','Dein Untertyp innerhalb des Stammes: Älteste, Stimme, Zweifelnde, Lernende oder Hütende.'],
+      ['Gesperrt','Der Zustand, in dem du nichts tun kannst — ausgelöst durch eine Lähmung-Karte oder durch die Spielleitung. (Nicht "handlungsunfähig" — gleiche Sache, ein Wort.)'],
+      ['Verdacht aussprechen','Eine öffentliche, kostenpflichtige Anschuldigung gegen eine Person — die App bestätigt nichts, die Wahrheit bleibt Spielsache.'],
+      ['Die Asche','Die geheime Zelle, die das Erwachen verhindern will.'],
+    ];
+    return `<div class="card small">Begriffe, die im Spiel öfter vorkommen — falls mal unklar ist, was gemeint ist.</div>
+    ${terms.map(([t,d])=>`<div class="card"><div class="eyebrow">${t}</div><div class="small">${d}</div></div>`).join('')}`;
+  }
+  if(state.infoSub==='roman') return `
+    <div class="card">Die Vorgeschichte Thalvaràns ist als eigenes Scrollytelling aufbereitet. Nicht Pflichtlektüre, aber sie gibt Tiefe für dein Spiel.
+      <div style="margin-top:12px"><a href="roman.html" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;border:1px solid var(--aurora);border-radius:8px;color:var(--aurora);text-decoration:none">Roman öffnen →</a></div>
+    </div>
+  `;
+  return '';
+}
+
 function tabHandel(){
   const mine = state.economy[state.identity.guestId] || {glut:0, marken:0};
   const myHand = state.hands[state.identity.guestId] || [];
   const myItems = state.items[state.identity.guestId] || [];
   return `
     <div class="card">
-      <div class="eyebrow">Dein Empfangs-Code</div>
-      <div class="small" style="margin-bottom:8px">Zeig das jemandem, der dir etwas schicken will — wie ein Zahl-Code.</div>
-      <div style="display:flex;justify-content:center;margin-bottom:8px"><canvas id="myQrCanvas" width="180" height="180"></canvas></div>
-      <div class="small" style="text-align:center;font-family:var(--mono);letter-spacing:.1em">${state.identity.tradeCode}</div>
+      <div class="eyebrow">Dein ID-Code</div>
+      <div class="small" style="margin-bottom:10px">Zeig diesen Code oder QR anderen — damit sie dir etwas schicken oder dich bei der Kodex-Suche finden können.</div>
+      <div style="text-align:center;font-family:var(--mono);font-size:28px;letter-spacing:.14em;padding:14px;background:var(--ink3);border-radius:10px;margin-bottom:10px">${state.identity.guestId}</div>
+      <div id="qrWrap" style="display:flex;justify-content:center;margin-bottom:4px">
+        <canvas id="myQrCanvas" width="160" height="160" style="display:none"></canvas>
+      </div>
+      <div id="qrFallback" class="small" style="text-align:center;color:var(--bone-dim)">QR-Code lädt …</div>
     </div>
     <div class="card">
       <div class="eyebrow">Jemandem etwas schicken</div>
@@ -863,12 +1408,13 @@ function tabHandel(){
         ${myItems.length ? `<div class="small" style="margin:10px 0 4px">Gegenstand abgeben:</div>
           ${myItems.map((it,idx)=>`<button data-idx="${idx}" class="sendItem" style="display:block;width:100%;margin-bottom:4px;text-align:left">${it}</button>`).join('')}` : ''}
       ` : `
-        <button id="startScan" class="primary" style="width:100%;margin-bottom:8px">Kamera scannen</button>
+        <div class="small" style="margin-bottom:6px">ID-Code der Zielperson eingeben:</div>
+        <div class="row"><input type="text" id="manualTargetCode" placeholder="ID-CODE" style="text-transform:uppercase"><button class="primary" id="confirmManualCode">Bestätigen</button></div>
+        ${state.tradeError ? `<div class="small" style="color:#a3453d;margin-top:6px">${state.tradeError}</div>` : ''}
+        <div class="small" style="margin:14px 0 6px">oder per Kamera scannen:</div>
+        <button id="startScan" style="width:100%;margin-bottom:8px">Kamera scannen</button>
         <video id="scanVideo" playsinline muted style="width:100%;border-radius:8px;display:${state.tradeScanning?'block':'none'}"></video>
         <canvas id="scanCanvas" style="display:none"></canvas>
-        <div class="small" style="margin:10px 0 4px">oder Code manuell eingeben:</div>
-        <div class="row"><input type="text" id="manualTargetCode" placeholder="CODE" style="text-transform:uppercase"><button id="confirmManualCode">Bestätigen</button></div>
-        ${state.tradeError ? `<div class="small" style="color:#a3453d;margin-top:6px">${state.tradeError}</div>` : ''}
       `}
     </div>
     <div class="card small">Du besitzt: ${mine.glut} Glut · ${mine.marken} Marken${myItems.length ? ' · ' + myItems.join(', ') : ''}</div>
@@ -877,9 +1423,20 @@ function tabHandel(){
 
 function renderTradeQR(){
   const canvas = document.getElementById('myQrCanvas');
-  if(canvas && typeof QRCode !== 'undefined'){
-    QRCode.toCanvas(canvas, state.identity.tradeCode, {width:180, margin:1, color:{dark:'#0b0e10', light:'#e9e3d6'}}, function(err){ if(err) console.warn('QR-Fehler', err); });
+  const fallback = document.getElementById('qrFallback');
+  if(!canvas) return;
+  if(typeof QRCode === 'undefined'){
+    if(fallback) fallback.textContent = 'QR-Code aktuell nicht verfügbar — der Code oben funktioniert genauso gut.';
+    return;
   }
+  QRCode.toCanvas(canvas, state.identity.guestId, {width:160, margin:1, color:{dark:'#0b0e10', light:'#e9e3d6'}}, function(err){
+    if(err){
+      if(fallback) fallback.textContent = 'QR-Code konnte nicht erzeugt werden — der Code oben funktioniert genauso gut.';
+      return;
+    }
+    canvas.style.display = 'block';
+    if(fallback) fallback.textContent = '';
+  });
 }
 
 async function startScan(){
@@ -914,7 +1471,18 @@ function stopScan(){
   state.tradeScanning = false;
   if(state._scanStream){ state._scanStream.getTracks().forEach(t=>t.stop()); state._scanStream = null; }
 }
-function resolveTarget(code){ stopScan(); if(code===state.identity.tradeCode){ state.tradeError='Du kannst dir selbst nichts schicken.'; render(); return; } const _entry=Object.entries(state.guests||{}).find(function(e){ return e[1] && e[1].tradeCode===code; }); if(!_entry){ state.tradeError='Code nicht erkannt — Person hat sich evtl. noch nicht eingeloggt.'; render(); return; } state.tradeTarget=_entry[0]; state.tradeTargetName=_entry[1].name; state.tradeError=null; render(); }async function sendResourcesTo(){
+function resolveTarget(code){
+  stopScan();
+  if(code === state.identity.guestId){ state.tradeError = 'Du kannst dir selbst nichts schicken.'; render(); return; }
+  const g = state.guests[code];
+  if(!g){ state.tradeError = 'ID-Code nicht erkannt — Person hat sich evtl. noch nicht eingeloggt.'; render(); return; }
+  state.tradeTarget = code;
+  state.tradeTargetName = g.name;
+  state.tradeError = null;
+  render();
+}
+async function sendResourcesTo(){
+  if(isLocked(state.identity.guestId)){ lockedAlert(); return; }
   const glutAmt = parseInt(document.getElementById('sendGlut').value)||0;
   const markenAmt = parseInt(document.getElementById('sendMarken').value)||0;
   if(glutAmt<=0 && markenAmt<=0) return;
@@ -928,10 +1496,13 @@ function resolveTarget(code){ stopScan(); if(code===state.identity.tradeCode){ s
   economy[state.identity.guestId]=mine; economy[state.tradeTarget]=target;
   await sSet('economy', economy, true);
   await pushEvent(`${state.identity.name} schickt ${state.tradeTargetName} ${g} Glut und ${m} Marken.`);
+  await logGM(state.identity.guestId, 'handel', `Schickt ${g} Glut, ${m} Marken an ${state.tradeTargetName}.`);
+  await logGM(state.tradeTarget, 'handel-erhalten', `Erhält ${g} Glut, ${m} Marken von ${state.identity.name}.`);
   state.tradeTarget=null; state.tradeTargetName=null;
   await loadShared();
 }
 async function sendCardTo(cardId){
+  if(isLocked(state.identity.guestId)){ lockedAlert(); return; }
   const hands=(await sGet('hands',true))||{};
   const mine = hands[state.identity.guestId]||[];
   const idx = mine.indexOf(cardId);
@@ -943,10 +1514,12 @@ async function sendCardTo(cardId){
   await sSet('hands', hands, true);
   const c = CARD_POOL.find(x=>x.id===cardId);
   await pushEvent(`${state.identity.name} gibt "${c.name}" an ${state.tradeTargetName} weiter.`);
+  await logGM(state.identity.guestId, 'handel-karte', `Gibt Karte "${c.name}" an ${state.tradeTargetName}.`);
   state.tradeTarget=null; state.tradeTargetName=null;
   await loadShared();
 }
 async function sendItemTo(idx){
+  if(isLocked(state.identity.guestId)){ lockedAlert(); return; }
   const items=(await sGet('items',true))||{};
   const mine = items[state.identity.guestId]||[];
   const item = mine[idx];
@@ -957,6 +1530,7 @@ async function sendItemTo(idx){
   items[state.identity.guestId]=mine; items[state.tradeTarget]=target;
   await sSet('items', items, true);
   await pushEvent(`${state.identity.name} gibt "${item}" an ${state.tradeTargetName} weiter.`);
+  await logGM(state.identity.guestId, 'handel-item', `Gibt Gegenstand "${item}" an ${state.tradeTargetName}.`);
   state.tradeTarget=null; state.tradeTargetName=null;
   await loadShared();
 }
@@ -965,7 +1539,7 @@ function myIncapacitatedBanner(){
   const until = (state.incapacitated||{})[state.identity.guestId];
   if(!until || until < Date.now()) return '';
   const secs = Math.ceil((until - Date.now())/1000);
-  return `<div class="banner" style="background:#a3453d">Du bist noch ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')} Min. handlungsunfähig.</div>`;
+  return `<div class="banner" style="background:#a3453d">Du bist noch ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')} Min. gesperrt.</div>`;
 }
 
 function tribeLine(tribe, text, cls, suffix){
@@ -989,12 +1563,12 @@ function renderCatDetail(cat, st, pending){
       html += tribeLine(pending.tribe, pending.text, 'pending', 'in Abstimmung');
     }
     if(!st.accepted.length && !(pending && pending.catId===cat.id)){
-      html += `<div class="small">Noch kein Satz angenommen oder zur Abstimmung gestellt.</div>`;
+      html += `<div class="small">Noch kein Fragment angenommen oder zur Abstimmung gestellt.</div>`;
     }
     if(availableFusions.length){
       html += availableFusions.map(f=>`
         <div class="fusionpreview">
-          <div class="fp-label">Mögliches Ergebnis bei Fusion — ${f.tribes.map(t=>TRIBES[t].name).join(' + ')} (${f.cost}× Glut)</div>
+          <div class="fp-label">Mögliches Ergebnis bei Zwischenklang — ${f.tribes.map(t=>TRIBES[t].name).join(' + ')} (${f.cost}× Glut)</div>
           <div class="fusedtext preview">"${f.text}"</div>
         </div>`).join('');
     }
@@ -1005,6 +1579,11 @@ function renderCatDetail(cat, st, pending){
 function tabKodex(){
   const myVote = state.pending ? state.pending.votes[state.identity.guestId] : null;
   return `
+    <div style="display:flex;flex-wrap:wrap;margin-bottom:12px">
+      <button class="infoSubBtn ${state.kodexSub==='saetze'?'active':''}" data-kodexsub="saetze" style="margin:0 6px 6px 0;flex:none">Fragmente & Abstimmung</button>
+      <button class="infoSubBtn ${state.kodexSub==='suche'?'active':''}" data-kodexsub="suche" style="margin:0 6px 6px 0;flex:none">Fragmente suchen</button>
+    </div>
+    ${state.kodexSub==='suche' ? tabKodexSuche() : `
     ${votingLockBanner()}
     ${state.pending ? `
     <div class="card">
@@ -1017,7 +1596,7 @@ function tabKodex(){
     </div>` : `<div class="card small">Kein Fragment gerade zur Abstimmung.</div>`}
     <div class="card">
       <div class="eyebrow">Kodex-Fortschritt</div>
-      <div class="small" style="margin-bottom:8px">Kategorie antippen, um die Sätze zu lesen.</div>
+      <div class="small" style="margin-bottom:8px">Kategorie antippen, um die Fragmente zu lesen.</div>
       ${CATEGORIES.map(c=>{ const st=state.kodex[c.id]||{accepted:[],fusedWith:null};
         const dc = st.fusedWith?'fusion':(st.accepted.length?'arbeit':'offen');
         const badge = st.fusedWith?'fusioniert':`${st.accepted.length}/7`;
@@ -1027,6 +1606,52 @@ function tabKodex(){
           ${open ? renderCatDetail(c, st, state.pending) : ''}
         </div>`; }).join('')}
     </div>
+    `}
+  `;
+}
+function tabKodexSuche(){
+  const me = state.identity.guestId;
+  const mine = myFragments(me);
+  const eco = state.economy[me]||{glut:0,marken:0};
+  const hints = myHints(me);
+  const cards = mine.map(frag=>{
+    const status = fragStatus(frag);
+    const partner = partnerOf(frag, me);
+    if(status==='gefunden'){
+      const otherOne = frag.a===me ? frag.b : frag.a;
+      return `<div class="card"><div class="eyebrow">Fund — ${CATEGORIES.find(c=>c.id===frag.cat).name}</div>
+        <div style="font-style:italic">"${frag.text}"</div>
+        <div class="small" style="margin-top:6px">Gemeinsam gefunden mit ${PLAYERS[otherOne].name}</div></div>`;
+    }
+    const h = hints[frag.id]||{};
+    const matched = (state.schuerfMatched||{})[frag.id];
+    const err = (state.schuerfError||{})[frag.id];
+    let hintBlock = `<div class="small" style="margin-bottom:6px">${schuerfHintText(partner,0)}</div>`;
+    if(h.s1) hintBlock += `<div class="small" style="margin-bottom:6px">${schuerfHintText(partner,1)}</div>`;
+    if(h.s2) hintBlock += `<div class="small" style="margin-bottom:6px">${schuerfHintText(partner,2)}</div>`;
+    let buyRow = '';
+    if(!h.s1) buyRow += `<button data-fid="${frag.id}" data-stufe="1" class="buyHintBtn">Hinweis Stufe 1 (1 Glut)</button>`;
+    if(h.s1 && !h.s2) buyRow += `<button data-fid="${frag.id}" data-stufe="2" class="buyHintBtn">Hinweis Stufe 2 (2 Glut)</button>`;
+    return `<div class="card">
+      <div class="eyebrow">Halbfragment — ${status==='unterwegs'?'unterwegs':'offen'}</div>
+      ${hintBlock}
+      ${buyRow ? `<div class="row" style="gap:6px;margin-bottom:8px">${buyRow}</div>` : ''}
+      ${!matched ? `
+        <div class="small" style="margin-bottom:6px">ID-Code der gefundenen Person eingeben:</div>
+        <div class="row"><input type="text" id="schuerfCode_${frag.id}" placeholder="ID-CODE" style="text-transform:uppercase">
+        <button class="primary schuerfMatchBtn" data-fid="${frag.id}">Prüfen</button></div>
+        ${err ? `<div class="small" style="color:#a3453d;margin-top:6px">${err}</div>` : ''}
+      ` : `
+        <div class="small" style="margin:8px 0"><b>Aufgabe:</b> ${frag.task}</div>
+        <button class="primary schuerfConfirmBtn" data-fid="${frag.id}" ${status==='unterwegs' && (fragConfirmed(frag.id)[me]) ? 'disabled' : ''}>
+          ${fragConfirmed(frag.id)[me] ? 'Warte auf Gegenperson …' : 'Vollzogen — bestätigen'}
+        </button>
+      `}
+    </div>`;
+  }).join('');
+  return `
+    <div class="card small">Du hast ${eco.glut} Glut. Hinweise kosten Glut und werden nicht zurückerstattet.</div>
+    ${cards || '<div class="card small">Keine Halbfragmente zugeteilt.</div>'}
   `;
 }
 
@@ -1067,8 +1692,9 @@ async function raiseSuspicion(targetGid, note){
 }
 
 function render(){
+  const scrollY = window.scrollY;
   const root = document.getElementById('root');
-  if(state.isGM){ root.innerHTML = gmScreen(); attachHandlers(); return; }
+  if(state.isGM){ root.innerHTML = gmScreen(); attachHandlers(); window.scrollTo(0, scrollY); return; }
   if(!state.identity){ root.innerHTML = gateScreen(); attachGateHandlers(); return; }
 
   if(state.announcement && state.announcement.id !== state.seenAnnouncementId){
@@ -1086,17 +1712,25 @@ function render(){
     return;
   }
 
-  const tabs = {profil:tabProfil, oekonomie:tabOekonomie, karten:tabKarten, handel:tabHandel, kodex:tabKodex, chat:tabChat};
+  const tabs = {profil:tabProfil, oekonomie:tabOekonomie, karten:tabKarten, handel:tabHandel, kodex:tabKodex, chat:tabChat, info:tabInfo};
+  const erw = state.erwachen || {kreis:false,folge:false,toeneBy:[],tor:false};
+  const erwSteps = [['Kreis',erw.kreis],['Folge',erw.folge],['Töne',(erw.toeneBy||[]).length>=3],["Tor",erw.tor]];
   root.innerHTML = `
+    <div class="reserve-outer" style="margin:8px 12px 0"><div class="reserve-fill" style="width:${Math.max(0,Math.min(100,state.reserve))}%"></div>
+      <div class="reserve-label">${state.reserve.toFixed(2)} %</div></div>
+    <div style="display:flex;gap:6px;margin:6px 12px 0;font-family:var(--mono);font-size:10px">
+      ${erwSteps.map(([label,steht])=>`<div style="flex:1;text-align:center;padding:4px 2px;border-radius:6px;background:${steht?'#0f1e20':'#1a2226'};color:${steht?'var(--aurora)':'var(--bone-dim)'}">${steht?'✓':'○'} ${label}</div>`).join('')}
+    </div>
     <div class="wrap">${tabs[state.tab]()}</div>
     <div class="tabbar">
-      ${['profil','oekonomie','karten','handel','kodex','chat'].map(t=>`<button class="tabbtn ${state.tab===t?'active':''}" data-tab="${t}">${labelFor(t)}</button>`).join('')}
+      ${['profil','oekonomie','karten','handel','kodex','chat','info'].map(t=>`<button class="tabbtn ${state.tab===t?'active':''}" data-tab="${t}">${labelFor(t)}</button>`).join('')}
     </div>
   `;
   attachHandlers();
   if(state.tab==='handel') renderTradeQR();
+  window.scrollTo(0, scrollY);
 }
-function labelFor(t){ return {profil:'Profil',oekonomie:'Glut',karten:'Karten',handel:'Handel',kodex:'Kodex',chat:'Rat'}[t]; }
+function labelFor(t){ return {profil:'👤 Profil',oekonomie:'✦ Glut',karten:'🃏 Karten',handel:'🤝 Handel',kodex:'📜 Kodex',chat:'💬 Rat',info:'ℹ Info'}[t]; }
 
 function gateScreen(){
   return `
@@ -1108,7 +1742,7 @@ function gateScreen(){
       <button class="primary" id="codeBtn" style="width:100%;margin-top:10px">Eintreten</button>
       <div class="small" id="codeErr" style="margin-top:8px;min-height:16px"></div>
     </div>
-    <p class="small">Deinen Code findest du auf deiner Einladung / Zugangsseite. Bitte nicht weitergeben.</p>
+    <p class="small">Deinen <b>Zugangscode</b> findest du auf deiner Einladung / Zugangsseite. Er ist privat — bitte nicht vor dem Abend weitergeben. Im Spiel selbst brauchst du ihn nicht mehr aktiv, dort zählt dein ID-Code (siehe Tab „Handel").</p>
   </div>`;
 }
 
@@ -1116,7 +1750,7 @@ function gmKodexOverview(){
   return `
   <div class="card">
     <div class="eyebrow">Kodex steuern — Fragmente freischalten</div>
-    <div class="small" style="margin-bottom:8px">Kategorie antippen, dann einen Stammes-Satz direkt zur Abstimmung stellen.</div>
+    <div class="small" style="margin-bottom:8px">Kategorie antippen, dann ein Stammes-Fragment direkt zur Abstimmung stellen.</div>
     ${CATEGORIES.map(c=>{
       const st = state.kodex[c.id] || {accepted:[], fusedWith:null};
       const open = state.gmKodexExpanded === c.id;
@@ -1142,7 +1776,7 @@ function gmKodexOverview(){
           detail += availableFusions.map(f=>`<div class="fusionpreview">
             <div class="fp-label">Zwischenklang verfügbar — ${f.tribes.map(t=>TRIBES[t].name).join(' + ')} (${f.cost}× Glut)</div>
             <div class="fusedtext preview">"${f.text}"</div>
-            <button data-f="${f.id}" class="proposeFusion">Fusion vorschlagen</button></div>`).join('');
+            <button data-f="${f.id}" class="proposeFusion">Zwischenklang vorschlagen</button></div>`).join('');
         }
       }
       return `<div class="catrow-wrap ${open?'open':''}">
@@ -1153,17 +1787,136 @@ function gmKodexOverview(){
   </div>`;
 }
 
+function gmLogHtml(){
+  const filter = state.gmLogFilter || {};
+  const log = (state.gmLog||[]).slice().reverse();
+  const now = Date.now();
+  const q = (filter.q||'').trim().toUpperCase();
+  const filtered = log.filter(e=>{
+    if(filter.tribe && e.tribe!==filter.tribe) return false;
+    if(q && !((e.code||'').toUpperCase().includes(q) || (e.name||'').toUpperCase().includes(q))) return false;
+    if(filter.mins && (now-e.ts) > filter.mins*60000) return false;
+    return true;
+  }).slice(0,150);
+  return `<div class="card"><div class="eyebrow">Log</div>
+    <div class="row" style="margin-bottom:8px">
+      <input type="text" id="gmLogSearch" placeholder="Name oder ID-Code" value="${filter.q||''}" style="text-transform:uppercase">
+      <button id="gmLogSearchBtn">Filtern</button>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <select id="gmLogTribe">
+        <option value="">Alle Stämme</option>
+        ${Object.entries(TRIBES).map(([id,t])=>`<option value="${id}" ${filter.tribe===id?'selected':''}>${t.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <button data-mins="15" class="gmLogTimeBtn">15 Min.</button>
+      <button data-mins="30" class="gmLogTimeBtn">30 Min.</button>
+      <button data-mins="60" class="gmLogTimeBtn">60 Min.</button>
+      <button data-mins="0" class="gmLogTimeBtn">Alle</button>
+    </div>
+    ${(filter.q || filter.tribe || filter.mins) ? `<button id="gmLogClear" style="width:100%;margin-bottom:8px">Filter zurücksetzen</button>` : ''}
+    <div class="small" style="margin-bottom:6px">${filtered.length} Einträge</div>
+    <div style="max-height:320px;overflow-y:auto">
+    ${filtered.map(e=>`<div style="border-bottom:1px solid #1f272b;padding:6px 0">
+      <div class="small" style="color:var(--bone-dim);font-family:var(--mono);font-size:10px">${new Date(e.ts).toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'})} · ${e.name}${e.tribe?' · '+TRIBES[e.tribe].name:''} · ${e.type}</div>
+      <div class="small">${e.text}</div>
+    </div>`).join('') || '<div class="small">Keine Einträge für diesen Filter.</div>'}
+    </div>
+  </div>`;
+}
+
+function gmErwachenHtml(){
+  const e = state.erwachen || {kreis:false,folge:false,toeneBy:[],tor:false};
+  const toeneCount = (e.toeneBy||[]).length;
+  const toeneStehen = toeneCount >= 3;
+  const rows = [
+    ['kreis','Ferroniten-Kreis', e.kreis],
+    ['folge','Axiomaten-Folge', e.folge],
+    ['toene',`Myrrhiden-Töne (${toeneCount}/3)`, toeneStehen],
+    ['tor',"Mor'Yen-Tor", e.tor],
+  ];
+  return `<div class="card"><div class="eyebrow">Erwachensschritte</div>
+    ${rows.map(([key,label,steht])=>`<div class="stat"><span>${label}</span>
+      <span class="small">${steht?'steht':'offen'}
+      <button data-erwstep="${key}" data-erwval="true" class="gmErwBtn">Bestätigen</button>
+      <button data-erwstep="${key}" data-erwval="false" class="gmErwBtn">Sabotieren / Reset</button>
+      </span></div>`).join('')}
+    <div class="small" style="margin-top:6px;color:${(e.kreis&&e.folge&&toeneStehen&&e.tor)?'var(--aurora)':'var(--bone-dim)'}">${(e.kreis&&e.folge&&toeneStehen&&e.tor)?'Alle vier Schritte stehen.':'Noch nicht alle vier Schritte stehen.'}</div>
+  </div>`;
+}
+
+function gmRequisitenHtml(){
+  const rows = [
+    ["Ilse Wagram (ZQMJEG)", "Unscheinbares Werkzeug, das in eine Schwachstelle des Kreises passt", "Rasp Kettling sucht im Spiel gezielt danach — muss real und auffindbar sein."],
+    ["Sera Klemm (XREJEH)", "Eigene, inoffizielle Kopie der Axiomaten-Folge, unvollständig", "Vantis Roh vergleicht sie im Spiel mit Dolns Kopie — beide Kopien müssen real und unterscheidbar sein."],
+    ["Doln Aschgrau (2UUJ2V)", "Gefälschtes Glied der Folge, unauffällig verpackt", "Vantis Roh vergleicht es mit Seras Kopie — muss real sein."],
+    ["Lior Sandkeep (YQWCPP)", "Lichtschale, die nie ganz erlischt", "Beck Aurel wird Lior im Spiel gezielt zur Herkunft seiner eigenen Lichtkapsel befragen — Lior braucht eine improvisierte Antwort parat."],
+    ["Beck Aurel (MDKQFR)", "Lichtkapsel, die niemand außer ihm öffnen kann", "Trägt Becks eigenes Ziel — muss real und sichtbar sein."],
+    ["Renna Ashcombe (JZ8YXC)", "Schlüssel zu einem Tor, das es nicht mehr gibt", "Trägt Rennas eigenes Ziel — muss real und sichtbar sein."],
+    ["Sil Marrow (NFNNGY)", "Selbstgezeichnete, ungenaue Karte", "Trägt Sils eigenes Ziel — muss real und sichtbar sein."],
+    ["Toma Reed (6DEXF4)", "Leeres Notizbuch", "Trägt Tomas eigenes Ziel — muss real und sichtbar sein."],
+    ["Nissa Warm (7U3J3X)", "Stück Glas, das Licht in Farben bricht", "Trägt Nissas eigenes Ziel — muss real und sichtbar sein."],
+  ];
+  return `<div class="card"><div class="eyebrow">Requisiten-Checkliste (GM-only)</div>
+    <div class="small" style="margin-bottom:8px;color:var(--bone-dim)">Diese Gegenstände sind spielmechanisch wichtig für andere Rollen. Nirgends spielerseitig sichtbar — nur hier.</div>
+    ${rows.map(([who,item,why])=>`<div style="border-bottom:1px solid #1f272b;padding:8px 0">
+      <div class="small"><b>${who}</b> — ${item}</div>
+      <div class="small" style="color:var(--ember);margin-top:2px">${why}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function gmSchuerfOverview(){
+  const rows = SCHUERF_FRAGMENTS.map(f=>{
+    const status = fragStatus(f);
+    const badge = status==='gefunden' ? 'gefunden' : (status==='unterwegs' ? 'unterwegs' : 'offen');
+    return `<div class="stat"><span>${f.id} · ${PLAYERS[f.a].name} ↔ ${PLAYERS[f.b].name}</span>
+      <span class="small">${badge}
+      ${status!=='gefunden' ? `<button data-fid="${f.id}" class="gmForceFragBtn">Abschließen</button>` : ''}
+      ${status!=='offen' ? `<button data-fid="${f.id}" class="gmResetFragBtn">Reset</button>` : ''}
+      </span></div>`;
+  }).join('');
+  const gefunden = SCHUERF_FRAGMENTS.filter(f=>fragStatus(f)==='gefunden').length;
+  return `<div class="card"><div class="eyebrow">Kodex-Fragmente (${gefunden}/${SCHUERF_FRAGMENTS.length} gefunden)</div>${rows}</div>`;
+}
+
+function gmAttentionHtml(){
+  const activeLocks = Object.entries(state.incapacitated||{}).filter(([gid,until])=>until>Date.now());
+  const waitingFragments = SCHUERF_FRAGMENTS.filter(f=>fragStatus(f)==='unterwegs');
+  const suspicionCount = (state.events||[]).filter(e=>e.text.startsWith('⚠') && e.ts > Date.now()-15*60*1000).length;
+  return `<div class="card" style="border-left:3px solid var(--ember)">
+    <div class="eyebrow">Auf einen Blick</div>
+    <div class="row" style="flex-wrap:wrap;gap:8px">
+      <div class="small">🔒 ${activeLocks.length} gesperrt</div>
+      <div class="small">⏳ ${waitingFragments.length} Fragmente warten auf Gegenseite</div>
+      <div class="small">⚠ ${suspicionCount} Verdacht (15 Min.)</div>
+    </div>
+    ${activeLocks.length ? `<div class="small" style="margin-top:6px;color:var(--bone-dim)">${activeLocks.map(([gid])=>(PLAYERS[gid]||{}).name||gid).join(', ')}</div>` : ''}
+  </div>`;
+}
+
 function gmScreen(){
   return `
   <div class="wrap" style="padding-top:20px">
     <div class="eyebrow">Spielleitung</div>
     <h2 style="margin-bottom:14px">GM-Panel</h2>
-    <div class="card"><div class="eyebrow">Reserve setzen</div>
-      <div class="row"><input type="text" id="reserveInput" value="${state.gmReserveInput}"><button id="reserveSet">Setzen</button></div></div>
+    ${gmAttentionHtml()}
+    ${gmErwachenHtml()}
+    ${gmRequisitenHtml()}
+    <div class="card"><div class="eyebrow">Reserve — aktuell ${state.reserve.toFixed(2)} %</div>
+      <div class="row" style="margin-bottom:8px"><input type="text" id="reserveInput" value="${state.reserve}"><button id="reserveSet">Setzen</button></div>
+      <div class="row">
+        <button data-d="-1" class="reserveStep">-1</button>
+        <button data-d="-0.1" class="reserveStep">-0.1</button>
+        <button data-d="0.1" class="reserveStep">+0.1</button>
+        <button data-d="1" class="reserveStep">+1</button>
+      </div></div>
     <div class="card"><div class="eyebrow">Ereignis senden</div>
       <input type="text" id="eventInput" placeholder="z.B. Die Asche zeigt sich..."><div style="height:8px"></div>
       <button id="eventSend" style="width:100%">An alle senden</button></div>
     ${gmKodexOverview()}
+    ${gmLogHtml()}
     <div class="card"><div class="eyebrow">Tempo steuern</div>
       ${state.votingLock && state.votingLock.until > Date.now() ? `
         <div class="small" style="margin-bottom:8px">Abstimmungen pausiert bis ${new Date(state.votingLock.until).toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'})}.</div>
@@ -1182,16 +1935,35 @@ function gmScreen(){
       ${state.pending.deadline && state.pending.deadline > Date.now() ? `<div class="small" style="margin-top:8px;color:var(--ember)">Zeitdruck läuft — endet ${new Date(state.pending.deadline).toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'})}.</div>` : `
       <div class="small" style="margin-top:10px">Zeitdruck aufbauen:</div>
       <div class="row"><button data-min="2" class="setDeadline">2 Min.</button><button data-min="5" class="setDeadline">5 Min.</button></div>`}
+      ${state.pending.type==='fusion' ? (()=>{
+        const f = FUSIONS.find(x=>x.id===state.pending.fusionId);
+        if(!f || f.cost<=0) return '';
+        return `<div class="small" style="margin-top:10px">Zahlende Person je Stamm (Gesamtkosten: ${f.cost} Glut):</div>` +
+          f.tribes.map(t=>`<div class="small" style="margin:4px 0">${TRIBES[t].name}:
+            <select class="fusionPayerSelect" data-tribe="${t}">
+              <option value="">– wählen –</option>
+              ${Object.entries(PLAYERS).filter(([code,p])=>p.tribe===t).map(([code,p])=>`<option value="${code}" ${state.gmFusionPayers[t]===code?'selected':''}>${p.name}</option>`).join('')}
+            </select></div>`).join('');
+      })() : ''}
       <div class="row" style="margin-top:10px"><button class="primary" id="finalAccept">Annehmen</button><button id="finalReject">Ablehnen</button></div></div>` : ''}
+    ${gmSchuerfOverview()}
     <div class="card"><div class="eyebrow">Gäste & Ökonomie (${Object.keys(state.guests).length})</div>
       ${Object.entries(state.guests).map(([gid,g])=>{
         const eco = state.economy[gid]||{glut:0,marken:0};
-        return `<div class="stat"><span style="color:${TRIBES[g.tribe].c}">${g.name} (${TRIBES[g.tribe].name})</span>
-        <span class="small">Glut ${eco.glut} · Marken ${eco.marken}
+        const locked = isLocked(gid);
+        return `<div class="stat" style="flex-direction:column;align-items:stretch;gap:4px">
+        <div><span style="color:${TRIBES[g.tribe].c}">${g.name} (${TRIBES[g.tribe].name})</span></div>
+        <div class="small">Glut ${eco.glut} · Marken ${eco.marken}
         <button data-gid="${gid}" data-f="glut" data-d="1" class="ecoBtn">+G</button>
         <button data-gid="${gid}" data-f="glut" data-d="-1" class="ecoBtn">-G</button>
         <button data-gid="${gid}" data-f="marken" data-d="1" class="ecoBtn">+M</button>
-        <button data-gid="${gid}" data-f="marken" data-d="-1" class="ecoBtn">-M</button></span></div>`;
+        <button data-gid="${gid}" data-f="marken" data-d="-1" class="ecoBtn">-M</button></div>
+        <div class="small">${locked
+          ? `Gesperrt bis ${new Date(state.incapacitated[gid]).toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'})} <button data-gid="${gid}" class="gmUnlockBtn">Aufheben</button>`
+          : `<button data-gid="${gid}" data-min="5" class="gmLockBtn">5 Min. sperren</button>
+             <button data-gid="${gid}" data-min="10" class="gmLockBtn">10 Min.</button>
+             <button data-gid="${gid}" data-min="15" class="gmLockBtn">15 Min.</button>`}
+        </div></div>`;
       }).join('') || '<div class="small">noch niemand</div>'}
     </div>
     <button id="gmLogout" style="width:100%">Als Spielleitung abmelden</button>
@@ -1205,7 +1977,7 @@ function attachGateHandlers(){
     const code = (input.value||'').trim().toUpperCase();
     if(code === GM_CODE){ enterAsGM(); return; }
     const p = PLAYERS[code];
-    if(!p){ document.getElementById('codeErr').textContent = 'Code nicht erkannt. Bitte prüfe die Schreibweise.'; return; }
+    if(!p){ document.getElementById('codeErr').textContent = 'Zugangscode nicht erkannt. Bitte prüfe die Schreibweise.'; return; }
     enterWithCode(code);
   }
   btn.onclick = tryEnter;
@@ -1255,6 +2027,8 @@ function attachHandlers(){
   const clearTarget=document.getElementById('clearTarget'); if(clearTarget) clearTarget.onclick=()=>{ state.tradeTarget=null; state.tradeTargetName=null; render(); };
   const sendResBtn=document.getElementById('sendResources'); if(sendResBtn) sendResBtn.onclick=sendResourcesTo;
   document.querySelectorAll('.sendCard').forEach(b=>b.onclick=()=>sendCardTo(b.dataset.c));
+  document.querySelectorAll('.infoSubBtn').forEach(b=>b.onclick=()=>{ state.infoSub=b.dataset.sub; render(); });
+  document.querySelectorAll('[data-kodexsub]').forEach(b=>b.onclick=()=>{ state.kodexSub=b.dataset.kodexsub; render(); });
   document.querySelectorAll('.sendItem').forEach(b=>b.onclick=()=>sendItemTo(parseInt(b.dataset.idx)));
   const chatSend=document.getElementById('chatSend'); if(chatSend) chatSend.onclick=()=>{ sendChat(document.getElementById('chatInput').value); };
   const chatInput=document.getElementById('chatInput'); if(chatInput) chatInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); sendChat(chatInput.value); } });
@@ -1270,11 +2044,45 @@ function attachHandlers(){
   });
   document.querySelectorAll('.gmProposeBasisBtn').forEach(b=>b.onclick=()=>gmProposeBasis(b.dataset.cat, b.dataset.tribe));
   document.querySelectorAll('.proposeFusion').forEach(b=>b.onclick=()=>gmProposeFusion(b.dataset.f));
-  const finalAccept=document.getElementById('finalAccept'); if(finalAccept) finalAccept.onclick=()=>gmFinalize(true);
+  const finalAccept=document.getElementById('finalAccept'); if(finalAccept) finalAccept.onclick=()=>{
+    if(state.pending && state.pending.type==='fusion'){
+      const f = FUSIONS.find(x=>x.id===state.pending.fusionId);
+      if(f && f.cost>0 && f.tribes.some(t=>!state.gmFusionPayers[t])){
+        alert('Bitte für jeden beteiligten Stamm eine zahlende Person auswählen.');
+        return;
+      }
+    }
+    gmFinalize(true);
+  };
   const finalReject=document.getElementById('finalReject'); if(finalReject) finalReject.onclick=()=>gmFinalize(false);
+  document.querySelectorAll('.gmErwBtn').forEach(b=>b.onclick=()=>gmSetErwachenStep(b.dataset.erwstep, b.dataset.erwval==='true'));
   const reserveSet=document.getElementById('reserveSet'); if(reserveSet) reserveSet.onclick=()=>gmSetReserve(document.getElementById('reserveInput').value);
+  document.querySelectorAll('.reserveStep').forEach(b=>b.onclick=()=>gmSetReserve((state.reserve + parseFloat(b.dataset.d)).toFixed(2)));
   const eventSend=document.getElementById('eventSend'); if(eventSend) eventSend.onclick=()=>gmBroadcast(document.getElementById('eventInput').value);
   document.querySelectorAll('.ecoBtn').forEach(b=>b.onclick=()=>gmAdjustEconomy(b.dataset.gid, b.dataset.f, parseInt(b.dataset.d)));
+  document.querySelectorAll('.gmLockBtn').forEach(b=>b.onclick=()=>gmLockPlayer(b.dataset.gid, parseInt(b.dataset.min)));
+  document.querySelectorAll('.gmUnlockBtn').forEach(b=>b.onclick=()=>gmUnlockPlayer(b.dataset.gid));
+  document.querySelectorAll('.buyHintBtn').forEach(b=>b.onclick=()=>buySchuerfHint(b.dataset.fid, parseInt(b.dataset.stufe)));
+  document.querySelectorAll('.schuerfMatchBtn').forEach(b=>b.onclick=()=>{
+    const v = document.getElementById('schuerfCode_'+b.dataset.fid).value;
+    schuerfTryMatch(b.dataset.fid, v);
+  });
+  document.querySelectorAll('.schuerfConfirmBtn').forEach(b=>b.onclick=()=>{ if(!b.disabled) schuerfConfirm(b.dataset.fid); });
+  document.querySelectorAll('.gmForceFragBtn').forEach(b=>b.onclick=()=>gmForceCompleteFragment(b.dataset.fid));
+  document.querySelectorAll('.gmResetFragBtn').forEach(b=>b.onclick=()=>gmResetFragment(b.dataset.fid));
+  document.querySelectorAll('.fusionPayerSelect').forEach(s=>s.onchange=()=>{ state.gmFusionPayers[s.dataset.tribe]=s.value; });
+  const gmLogSearchBtn=document.getElementById('gmLogSearchBtn');
+  if(gmLogSearchBtn) gmLogSearchBtn.onclick=()=>{ state.gmLogFilter=state.gmLogFilter||{}; state.gmLogFilter.q=document.getElementById('gmLogSearch').value; render(); };
+  const gmLogTribe=document.getElementById('gmLogTribe');
+  if(gmLogTribe) gmLogTribe.onchange=()=>{ state.gmLogFilter=state.gmLogFilter||{}; state.gmLogFilter.tribe=gmLogTribe.value; render(); };
+  document.querySelectorAll('.gmLogTimeBtn').forEach(b=>b.onclick=()=>{ state.gmLogFilter=state.gmLogFilter||{}; state.gmLogFilter.mins=parseInt(b.dataset.mins)||null; render(); });
+  const gmLogClear=document.getElementById('gmLogClear');
+  if(gmLogClear) gmLogClear.onclick=()=>{ state.gmLogFilter={}; render(); };
+  const whatNowBtn=document.getElementById('whatNowBtn'); if(whatNowBtn) whatNowBtn.onclick=()=>{ state.whatNowOpen=true; state.whatNowChoice=null; render(); };
+  const whatNowCancel=document.getElementById('whatNowCancel'); if(whatNowCancel) whatNowCancel.onclick=()=>{ state.whatNowOpen=false; state.whatNowChoice=null; render(); };
+  const whatNowAgain=document.getElementById('whatNowAgain'); if(whatNowAgain) whatNowAgain.onclick=()=>{ state.whatNowChoice=null; render(); };
+  document.querySelectorAll('.whatNowChoiceBtn').forEach(b=>b.onclick=()=>{ state.whatNowChoice=b.dataset.c; render(); });
+  const profileSheetToggle=document.getElementById('profileSheetToggle'); if(profileSheetToggle) profileSheetToggle.onclick=()=>{ state.profileSheetOpen=!state.profileSheetOpen; render(); };
   const switchCode=document.getElementById('switchCode'); if(switchCode) switchCode.onclick = async () => {
     await sSet('playerCode', null, false);
     state.identity = null;
