@@ -1,91 +1,248 @@
 <!DOCTYPE html>
 <html lang="de">
   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Thalvaràn — Anmeldung zum Abend</title>
-    <style>
-          body {
-                  background: #080d10;
-                  color: #e9e3d6;
-                  font-family: "Iowan Old Style", Palatino, Georgia, serif;
-                  padding: 40px 20px;
-                  margin: 0;
-                  line-height: 1.6;
-          }
-          h1 {
-                  color: #63c6a3;
-                  font-size: 2em;
-                  text-align: center;
-          }
-          .content {
-                  max-width: 600px;
-                  margin: 0 auto;
-          }
-          .form-group {
-                  margin: 20px 0;
-          }
-          label {
-                  display: block;
-                  margin-bottom: 8px;
-                  font-weight: bold;
-          }
-          input, textarea {
-                  width: 100%;
-                  padding: 10px;
-                  border: 1px solid #16242a;
-                  background: #1d2f35;
-                  color: #e9e3d6;
-                  font-family: inherit;
-                  border-radius: 4px;
-                  box-sizing: border-box;
-          }
-          textarea {
-                  min-height: 100px;
-                  resize: vertical;
-          }
-          button {
-                  background: #63c6a3;
-                  color: #08110d;
-                  padding: 12px 24px;
-                  border: none;
-                  border-radius: 4px;
-                  font-size: 1em;
-                  cursor: pointer;
-                  font-weight: bold;
-          }
-          button:hover {
-                  background: #5ab899;
-          }
-        </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thalvaràn — Anmeldung zum Abend</title>
+  <style>
+    body {
+      background: #080d10;
+      color: #e9e3d6;
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+      padding: 40px 20px;
+      margin: 0;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #63c6a3;
+      font-size: 2em;
+      text-align: center;
+    }
+    .content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .form-group {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #16242a;
+      background: #1d2f35;
+      color: #e9e3d6;
+      font-family: inherit;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    button {
+      background: #63c6a3;
+      color: #08110d;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+    button:hover {
+      background: #5ab899;
+    }
+    .success-message {
+      display: none;
+      background: #1f4d2b;
+      color: #63c6a3;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    </style>
   </head>
   <body>
-      <div class="content">
-            <h1>Anmeldung zum Abend</h1>
-          <p>Bitte melde dich hier zum Abend "Die Lange Nacht" an:</p>
-          
-          <form>
-                  <div class="form-group">
-                            <label for="name">Name:</label>label>
-                            <input type="text" id="name" name="name" required>
-                  </div>div>
+    <div class="content">
+      <h1>Anmeldung zum Abend</h1>
+    <p>Bitte melde dich hier zum Abend "Die Lange Nacht" an:</p>
+    
+    <div class="success-message" id="successMessage">
+    Danke für deine Anmeldung! Deine Daten wurden gespeichert.
+    </div>div>
+    
+    <form id="anmeldungForm">
+    <div class="form-group">
+    <label for="name">Name:</label>label>
+    <input type="text" id="name" name="name" required>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="email">E-Mail:</label>label>
+    <input type="email" id="email" name="email" required>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="rat">Rat (0-5):</label>label>
+    <select id="rat" name="rat">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="geheimnisse">Geheimnisse (0-5):</label>label>
+    <select id="geheimnisse" name="geheimnisse">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="blueffen">Blüffen (0-5):</label>label>
+    <select id="blueffen" name="blueffen">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="konflikt">Konflikt (0-5):</label>label>
+    <select id="konflikt" name="konflikt">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="aufritt">Aufritt (0-5):</label>label>
+    <select id="aufritt" name="aufritt">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="erfahrung">Erfahrung (0-5):</label>label>
+    <select id="erfahrung" name="erfahrung">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="sonderrolle">Sonderrolle (0-5):</label>label>
+    <select id="sonderrolle" name="sonderrolle">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <div class="form-group">
+    <label for="fruh-briefing">Früh-Briefing (0-5):</label>label>
+    <select id="fruh-briefing" name="fruh-briefing">
+    <option value="">-- Bitte wählen --</option>option>
+    <option value="0">0</option>option>
+    <option value="1">1</option>option>
+    <option value="2">2</option>option>
+    <option value="3">3</option>option>
+    <option value="4">4</option>option>
+    <option value="5">5</option>option>
+    </select>select>
+    </div>div>
+    
+    <button type="submit">Anmelden</button>button>
+    </form>form>
+    </div>div>
+  
+  <script>
+    const GOOGLE_SHEET_ID = '1mWRGOqxi3S-PIZSeV5J18Ypxr8pkzt_p9I3U1WQ0YbI';
+    const GOOGLE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit`;
 
-                  <div class="form-group">
-                            <label for="email">E-Mail:</label>label>
-                            <input type="email" id="email" name="email" required>
-                  </div>div>
+    document.getElementById('anmeldungForm').addEventListener('submit', function(e) {
+      e.preventDefault();
 
-                  <div class="form-group">
-                            <label for="message">Nachricht oder Bemerkungen:</label>label>
-                            <textarea id="message" name="message"></textarea>
-                  </div>div>
+      const formData = {
+        timestamp: new Date().toLocaleString('de-DE'),
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        rat: document.getElementById('rat').value || '',
+        geheimnisse: document.getElementById('geheimnisse').value || '',
+        blueffen: document.getElementById('blueffen').value || '',
+        konflikt: document.getElementById('konflikt').value || '',
+        aufritt: document.getElementById('aufritt').value || '',
+        erfahrung: document.getElementById('erfahrung').value || '',
+        sonderrolle: document.getElementById('sonderrolle').value || '',
+        fruhBriefing: document.getElementById('fruh-briefing').value || ''
+      };
 
-                  <button type="submit">Anmelden</button>button>
-          </form>
-      </div>div>
+      // Save to browser storage
+      let submissions = JSON.parse(localStorage.getItem('anmeldungen') || '[]');
+      submissions.push(formData);
+      localStorage.setItem('anmeldungen', JSON.stringify(submissions));
+
+      // Show success message
+      const form = document.getElementById('anmeldungForm');
+      form.style.display = 'none';
+      document.getElementById('successMessage').style.display = 'block';
+
+      // Reset form
+      this.reset();
+
+      // Reshow form after 5 seconds
+      setTimeout(() => {
+        form.style.display = 'block';
+        document.getElementById('successMessage').style.display = 'none';
+      }, 5000);
+
+      console.log('Anmeldung gespeichert:', formData);
+    });
+  </script>
   </body>
 </html>html>
-          </form></p></h1>
+  </script></p></h1>
   </body>
-    </style></title>
+  </style></title>
   </head>
