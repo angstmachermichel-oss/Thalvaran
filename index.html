@@ -1,205 +1,160 @@
 <!DOCTYPE html>
 <html lang="de">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Thalvaràn — Die Lange Nacht</title>
-    <style>
-          :root {
-                  --ink: #080d10;
-                  --frost: #16242a;
-                  --frost-2: #1d2f35;
-                  --bone: #e9e3d6;
-                  --bone-dim: #a4aba8;
-                  --aurora: #63c6a3;
-                  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-                  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-                  --bar: 54px;
-          }
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thalvaràn — Die Lange Nacht</title>
+<style>
+  :root{
+    --ink:#080d10; --frost:#16242a; --frost-2:#1d2f35;
+    --bone:#e9e3d6; --bone-dim:#a4aba8; --aurora:#63c6a3;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+    --bar:54px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--ink);color:var(--bone);font-family:var(--serif);overflow:hidden}
+  header.bar{height:var(--bar);position:fixed;top:0;left:0;right:0;z-index:30;
+    background:color-mix(in oklab,var(--ink),#000 28%);border-bottom:1px solid var(--frost);
+    backdrop-filter:blur(8px);display:flex;align-items:center;gap:14px;padding:0 18px}
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+  .sigil{width:28px;height:28px;flex:0 0 auto}
+  .sigil svg{width:100%;height:100%}
+  .sigil .r{fill:none;stroke:var(--aurora);stroke-width:1.6}
+  .sigil .c{fill:var(--aurora)}
+  .brand .mk{font-size:16px;letter-spacing:.05em;white-space:nowrap}
+  .brand .sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--bone-dim);display:block;margin-top:1px;white-space:nowrap}
 
-          * {
-                  box-sizing: border-box;
-          }
+  nav{display:flex;gap:4px;position:relative}
+  nav button{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--bone-dim);background:transparent;border:1px solid var(--frost-2);border-radius:20px;
+    padding:8px 14px;cursor:pointer;transition:.2s;white-space:nowrap}
+  nav button:hover{color:var(--bone)}
+  nav button[aria-current="true"]{color:#08110d;background:var(--aurora);border-color:var(--aurora)}
 
-          html, body {
-                  margin: 0;
-                  height: 100%;
-                  background: var(--ink);
-                  color: var(--bone);
-                  font-family: var(--serif);
-                  overflow: hidden;
-          }
+  .dropdown{position:relative}
+  .dropdown > .dtoggle{display:inline-flex;align-items:center;gap:6px}
+  .dropdown .car{font-size:9px;transition:transform .2s ease;display:inline-block}
+  .dropdown.open .car{transform:rotate(180deg)}
+  .dropdown-menu{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    background:color-mix(in oklab,var(--ink),#000 18%);border:1px solid var(--frost-2);border-radius:12px;
+    padding:6px;display:none;flex-direction:column;gap:2px;min-width:180px;
+    box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:31}
+  .dropdown.open .dropdown-menu{display:flex}
+  .dropdown-menu button{width:100%;text-align:left;border-radius:8px;border-color:transparent;padding:9px 12px}
+  .dropdown-menu button[aria-current="true"]{color:#08110d;background:var(--aurora)}
 
-          header {
-                  height: var(--bar);
-                  position: fixed;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  z-index: 10;
-                  background: color-mix(in oklab, var(--ink), #000 28%);
-                  border-bottom: 1px solid var(--frost);
-                  backdrop-filter: blur(8px);
-                  display: flex;
-                  align-items: center;
-                  gap: 14px;
-                  padding: 0 18px;
-                  flex-wrap: wrap;
-          }
+  @media (max-width:560px){
+    .brand .sub{display:none}
+    nav button{padding:8px 11px;font-size:10px}
+    .dropdown-menu{left:auto;right:0;transform:none}
+  }
+  .frames{position:fixed;top:var(--bar);left:0;right:0;bottom:0}
+  iframe.frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--ink)}
+  iframe.frame.on{display:block}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand">
+    <span class="sigil"><svg viewBox="0 0 28 28"><circle class="r" cx="14" cy="14" r="12"/><circle class="c" cx="14" cy="14" r="3.2"/></svg></span>
+    <span><span class="mk">Thalvaràn</span><span class="sub">Die Lange Nacht</span></span>
+  </div>
+  <nav aria-label="Ansicht">
+    <button id="t-vorgeschichte" data-section="vorgeschichte" aria-current="true">Vorgeschichte</button>
 
-          .brand {
-                  display: flex;
-                  align-items: center;
-                  gap: 10px;
-                  margin-right: auto;
-                  min-width: 0;
-          }
+    <div class="dropdown" id="info-dropdown">
+      <button class="dtoggle" id="t-info" data-section="info" aria-haspopup="true" aria-expanded="false">
+        Informationen <span class="car">▾</span>
+      </button>
+      <div class="dropdown-menu" role="menu">
+        <button data-section="info" data-view="welt" aria-current="false">Die Welt</button>
+        <button data-section="info" data-view="staemme" aria-current="false">Die Stämme</button>
+        <button data-section="info" data-view="ablauf" aria-current="false">Der Abend</button>
+      </div>
+    </div>
 
-          .sigil {
-                  width: 28px;
-                  height: 28px;
-                  flex: 0 0 auto;
-          }
+    <button id="t-anmeldung" data-section="anmeldung" data-view="anmeldung" aria-current="false">Anmeldung</button>
+    <button id="t-spielzugang" data-section="spielzugang" aria-current="false">Spielzugang</button>
+  </nav>
+</header>
 
-          .sigil svg {
-                  width: 100%;
-                  height: 100%;
-          }
+<div class="frames">
+  <iframe id="f-vorgeschichte" class="frame on" title="Vorgeschichte" src="roman-final.html"></iframe>
+  <iframe id="f-info" class="frame" title="Informationen &amp; Anmeldung" src="informationen.html"></iframe>
+  <iframe id="f-spielzugang" class="frame" title="Spielzugang" src="thalvaran-kodex-app-v3-final.html"></iframe>
+</div>
 
-          .sigil .r {
-                  fill: none;
-                  stroke: var(--aurora);
-                  stroke-width: 1.6;
-          }
+<script>
+(function(){
+  var frames = {
+    vorgeschichte: document.getElementById('f-vorgeschichte'),
+    info:          document.getElementById('f-info'),
+    anmeldung:     document.getElementById('f-info'),
+    spielzugang:   document.getElementById('f-spielzugang')
+  };
+  var topButtons = document.querySelectorAll('nav > button, nav > .dropdown > .dtoggle');
+  var infoDropdown = document.getElementById('info-dropdown');
+  var infoToggle = document.getElementById('t-info');
+  var infoMenuBtns = document.querySelectorAll('.dropdown-menu button');
+  var loaded = {};
 
-          .sigil .c {
-                  fill: var(--aurora);
-          }
+  ['f-vorgeschichte','f-info','f-spielzugang'].forEach(function(id){
+    document.getElementById(id).addEventListener('load', function(){ loaded[id] = true; });
+  });
 
-          .brand .mk {
-                  font-size: 16px;
-                  letter-spacing: 0.05em;
-                  white-space: nowrap;
-          }
+  function frameIdOf(section){
+    if(section === 'vorgeschichte') return 'f-vorgeschichte';
+    if(section === 'spielzugang') return 'f-spielzugang';
+    return 'f-info';
+  }
 
-          .brand .sub {
-                  font-family: var(--mono);
-                  font-size: 8.5px;
-                  letter-spacing: 0.24em;
-                  text-transform: uppercase;
-                  color: var(--bone-dim);
-                  display: block;
-                  margin-top: 1px;
-                  white-space: nowrap;
-          }
+  function setView(iframe, view){
+    if(!view) return;
+    function apply(){ try{ if(iframe.contentWindow && iframe.contentWindow.showView) iframe.contentWindow.showView(view); }catch(e){} }
+    if(loaded[iframe.id]) apply();
+    else iframe.addEventListener('load', apply, { once:true });
+  }
 
-          .nav-menu {
-                  display: flex;
-                  gap: 8px;
-                  align-items: center;
-                  flex-wrap: wrap;
-          }
+  function closeDropdown(){
+    infoDropdown.classList.remove('open');
+    infoToggle.setAttribute('aria-expanded','false');
+  }
 
-          .nav-btn {
-                  font-family: var(--mono);
-                  font-size: 11px;
-                  letter-spacing: 0.07em;
-                  text-transform: uppercase;
-                  color: var(--bone-dim);
-                  background: var(--frost-2);
-                  border: 1px solid var(--frost-2);
-                  border-radius: 4px;
-                  padding: 6px 10px;
-                  cursor: pointer;
-                  transition: 0.2s;
-                  white-space: nowrap;
-          }
+  function activate(section, view){
+    var fid = frameIdOf(section);
+    Object.keys(frames).forEach(function(){});
+    document.querySelectorAll('iframe.frame').forEach(function(f){ f.classList.toggle('on', f.id === fid); });
 
-          .nav-btn:hover {
-                  color: var(--bone);
-          }
+    document.getElementById('t-vorgeschichte').setAttribute('aria-current', section==='vorgeschichte' ? 'true':'false');
+    document.getElementById('t-anmeldung').setAttribute('aria-current', section==='anmeldung' ? 'true':'false');
+    document.getElementById('t-spielzugang').setAttribute('aria-current', section==='spielzugang' ? 'true':'false');
+    infoToggle.setAttribute('aria-current', section==='info' ? 'true':'false');
+    infoMenuBtns.forEach(function(b){ b.setAttribute('aria-current', (section==='info' && b.dataset.view===view) ? 'true':'false'); });
 
-          .nav-btn.active {
-                  color: #08110d;
-                  background: var(--aurora);
-                  border-color: var(--aurora);
-          }
+    setView(document.getElementById(fid), view);
+    closeDropdown();
+  }
 
-          .nav-btn:focus {
-                  color: #08110d;
-                  background: var(--aurora);
-                  border-color: var(--aurora);
-                  outline: none;
-          }
+  document.getElementById('t-vorgeschichte').addEventListener('click', function(){ activate('vorgeschichte'); });
+  document.getElementById('t-anmeldung').addEventListener('click', function(){ activate('anmeldung','anmeldung'); });
+  document.getElementById('t-spielzugang').addEventListener('click', function(){ activate('spielzugang'); });
 
-          .frames {
-                  position: fixed;
-                  top: var(--bar);
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-          }
-
-          iframe {
-                  position: absolute;
-                  inset: 0;
-                  width: 100%;
-                  height: 100%;
-                  border: 0;
-                  display: none;
-                  background: var(--ink);
-          }
-
-          iframe.on {
-                  display: block;
-          }
-        </style>
-  </head>
-  <body>
-      <header>
-            <div class="brand">
-                    <span class="sigil"><svg viewBox="0 0 28 28"><circle class="r" cx="14" cy="14" r="12"/><circle class="c" cx="14" cy="14" r="3.2"/></svg>svg></span>span>
-                    <span><span class="mk">Thalvaràn</span><span class="sub">Die Lange Nacht</span></span>
-            </div>div>
-          <div class="nav-menu">
-                <button class="nav-btn active" data-view="vorgeschichte">Vorgeschichte</button>button>
-                <button class="nav-btn" data-view="informationen">Informationen</button>button>
-                <button class="nav-btn" data-view="anmeldung">Anmeldung</button>button>
-                <button class="nav-btn" data-view="spielzugang">Spielzugang</button>button>
-          </div>div>
-      </header>
-    
-    <div class="frames">
-        <iframe id="f-vorgeschichte" class="on" title="Vorgeschichte" src="roman-final.html"></iframe>iframe>
-        <iframe id="f-informationen" title="Informationen" src="abend-informationen.html"></iframe>iframe>
-        <iframe id="f-anmeldung" title="Anmeldung" src="abend-anmeldung.html"></iframe>iframe>
-        <iframe id="f-spielzugang" title="Spielzugang" src="thalvaran-kodex-app.html"></iframe>iframe>
-    </div>div>
-    
-    <script>
-          const navBtns = document.querySelectorAll('.nav-btn');
-          const frames = {
-                  vorgeschichte: document.getElementById('f-vorgeschichte'),
-                  informationen: document.getElementById('f-informationen'),
-                  anmeldung: document.getElementById('f-anmeldung'),
-                  spielzugang: document.getElementById('f-spielzugang')
-          };
-
-          function switchTo(view) {
-                  Object.values(frames).forEach(f => f.classList.remove('on'));
-                  navBtns.forEach(btn => btn.classList.remove('active'));
-                  frames[view].classList.add('on');
-                  document.querySelector('[data-view="' + view + '"]').classList.add('active');
-          }
-
-          navBtns.forEach(btn => {
-                  btn.addEventListener('click', () => switchTo(btn.dataset.view));
-          });
-    </script>
-  </body>
-</html>html>
-    </script></span>
-      </header>
-  </body>
-    </style></title>
-  </head>
+  infoToggle.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = infoDropdown.classList.toggle('open');
+    infoToggle.setAttribute('aria-expanded', open ? 'true':'false');
+  });
+  infoMenuBtns.forEach(function(b){
+    b.addEventListener('click', function(){ activate('info', b.dataset.view); });
+  });
+  document.addEventListener('click', function(e){
+    if(!infoDropdown.contains(e.target)) closeDropdown();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeDropdown();
+  });
+})();
+</script>
+</body>
+</html>

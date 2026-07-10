@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thalvaràn — Der Abend</title>
+<style>
+  :root{
+    --ink:#080d10; --ink-2:#0d161a; --ink-3:#101e23; --frost:#16242a; --frost-2:#1d2f35;
+    --bone:#e9e3d6; --bone-dim:#a4aba8; --aurora:#63c6a3; --ember:#e7a44a; --blood:#c0564e;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+    --tc:var(--aurora); --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--serif);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  header.sub{position:sticky;top:0;z-index:20;background:color-mix(in oklab,var(--ink),#000 22%);border-bottom:1px solid var(--frost);backdrop-filter:blur(8px)}
+  header.sub .row{max-width:1000px;margin:0 auto;display:flex;gap:4px;flex-wrap:wrap;padding:9px 16px}
+  header.sub button{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--bone-dim);background:transparent;border:1px solid transparent;border-radius:18px;padding:7px 13px;cursor:pointer;transition:.2s}
+  header.sub button:hover{color:var(--bone)}
+  header.sub button[aria-current="true"]{color:#08110d;background:var(--aurora);border-color:var(--aurora)}
+  main{max-width:var(--maxw);margin:0 auto;padding:0 20px 16vh}
+  .view{display:none;animation:fade .4s ease}
+  .view.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ember);display:flex;align-items:center;gap:11px;margin:0 0 12px}
+  .eyebrow::before{content:"";width:24px;height:1px;background:var(--ember);opacity:.7}
+  h1{font-size:clamp(30px,6vw,48px);font-weight:400;letter-spacing:.01em;margin:0 0 10px;line-height:1.08}
+  h2{font-size:clamp(20px,3.4vw,26px);font-weight:400;color:var(--aurora);margin:40px 0 12px}
+  .lead{font-size:19px;color:var(--bone-dim);font-style:italic;margin:0 0 14px;max-width:56ch}
+  p{margin:0 0 15px}
+  ul{margin:0 0 16px;padding:0;list-style:none}
+  li{position:relative;padding-left:18px;margin-bottom:8px;color:var(--bone-dim)}
+  li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%;background:var(--aurora);opacity:.7}
+  .label{margin:0 0 11px;color:var(--bone-dim)}
+  .label b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aurora);margin-bottom:3px;font-weight:400}
+  blockquote{margin:14px 0 18px;padding-left:16px;border-left:2px solid var(--ember);font-style:italic;color:var(--bone);font-size:clamp(18px,3vw,22px);line-height:1.45}
+
+  /* Welt: Hero + Zeitachse (öffentlich) */
+  .hero{padding:9vh 0 5vh;text-align:center}
+  .hero .kick{font-family:var(--mono);font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--aurora);margin-bottom:20px}
+  .hero .word{font-size:clamp(44px,12vw,96px);line-height:.94;font-weight:400;letter-spacing:.04em;margin:0;text-shadow:0 0 38px rgba(99,198,163,.16)}
+  .hero .st{font-size:clamp(17px,3vw,22px);color:var(--aurora);margin:12px 0 0}
+  .tl{margin:6px 0 8px}
+
+  /* Stämme */
+  .tribes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:13px;margin:6px 0 20px}
+  .tribe{border:1px solid var(--frost);border-top:2px solid var(--tcx);border-radius:8px;background:rgba(255,255,255,.013);padding:16px 15px}
+  .tribe h3{margin:0;font-size:19px;color:var(--tcx);font-weight:600}
+  .tribe .arch{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-dim);margin-top:2px}
+  .tribe .motto{font-style:italic;color:var(--bone);margin:11px 0 8px;font-size:15px;line-height:1.5}
+  .tribe .wesen{font-size:14px;color:var(--bone-dim);line-height:1.5}
+
+  /* Ablauf/FAQ */
+  .infogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px;margin:6px 0 22px}
+  .info{border:1px solid var(--frost);border-radius:8px;background:rgba(255,255,255,.013);padding:16px 15px}
+  .info .il{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ember);display:block;margin-bottom:7px}
+  .info .iv{font-size:17px;color:var(--bone);line-height:1.3}
+  .info .ix{font-size:13px;color:var(--bone-dim);margin-top:5px;line-height:1.5}
+  details.faq{border:1px solid var(--frost);border-left:2px solid var(--aurora);border-radius:5px;margin-bottom:8px;background:rgba(255,255,255,.012)}
+  details.faq>summary{cursor:pointer;list-style:none;padding:13px 15px;font-family:var(--mono);font-size:13px;letter-spacing:.03em;color:var(--bone);display:flex;gap:10px;align-items:center}
+  details.faq>summary::-webkit-details-marker{display:none}
+  details.faq>summary::before{content:"+";color:var(--aurora);font-size:16px}
+  details.faq[open]>summary::before{content:"\2013"}
+  details.faq .fb{padding:0 15px 14px;color:var(--bone-dim);font-size:15px;line-height:1.6}
+
+  /* Anmeldung */
+  .q{border:1px solid var(--frost);border-radius:8px;background:rgba(255,255,255,.013);padding:16px 16px;margin-bottom:13px}
+  .q .ql{font-size:17px;color:var(--bone);margin:0 0 3px}
+  .q .qh{font-size:13px;color:var(--bone-dim);margin:0 0 12px}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opts button{font-family:var(--mono);font-size:12px;color:var(--bone-dim);background:transparent;border:1px solid var(--frost-2);border-radius:18px;padding:9px 14px;cursor:pointer;transition:.18s}
+  .opts button:hover{color:var(--bone);border-color:var(--bone-dim)}
+  .opts button[aria-pressed="true"]{color:#08110d;background:var(--aurora);border-color:var(--aurora)}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field .two{display:flex;gap:10px;flex-wrap:wrap}
+  .field input,.field textarea{background:var(--ink-2);border:1px solid var(--frost-2);border-radius:6px;color:var(--bone);font-family:var(--mono);font-size:15px;padding:11px 13px;width:100%}
+  .field .two input{flex:1;min-width:160px}
+  .field textarea{min-height:78px;resize:vertical;line-height:1.5}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--aurora)}
+  .submit{margin-top:6px;width:100%;background:var(--aurora);color:#08110d;border:none;border-radius:7px;font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:15px;cursor:pointer;transition:.2s}
+  .submit:hover{filter:brightness(1.08)}
+  .result{border:1px solid var(--frost);border-top:2px solid var(--tc);border-radius:8px;background:rgba(255,255,255,.015);padding:20px;margin-bottom:14px;display:none}
+  .result.on{display:block;animation:fade .5s ease}
+  .result .rk{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim)}
+  .result .rt{font-size:clamp(22px,5vw,32px);font-weight:400;margin:8px 0 2px;color:var(--tc)}
+  .result .rr{font-style:italic;color:var(--bone-dim);margin:0 0 12px}
+  .result .rb{font-size:15px;color:var(--bone-dim);line-height:1.6}
+  .result .rb b{color:var(--bone)}
+  .result .alts{margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--bone-dim)}
+  .confirm{border:1px solid color-mix(in oklab,var(--aurora),var(--frost));border-radius:8px;background:color-mix(in oklab,var(--aurora),transparent 92%);padding:16px;margin-bottom:14px;display:none}
+  .confirm.on{display:block;animation:fade .5s ease}
+  .confirm .ch{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--aurora);margin-bottom:7px}
+  .privacy{font-size:12px;color:var(--bone-dim);margin-top:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<header class="sub">
+  <div class="row">
+    <button data-view="welt" aria-current="true">Die Welt</button>
+    <button data-view="staemme" aria-current="false">Die Stämme</button>
+    <button data-view="ablauf" aria-current="false">Der Abend</button>
+    <button data-view="anmeldung" aria-current="false">Anmeldung</button>
+  </div>
+</header>
+
+<main>
+  <!-- DIE WELT -->
+  <section class="view on" id="v-welt">
+    <div class="hero">
+      <div class="kick">Die Nacht des Jahres 2147</div>
+      <div class="word">Thalvaràn</div>
+      <div class="st">Die Lange Nacht</div>
+    </div>
+    <p class="lead">Über hundert Jahre nach dem großen Zerfall leben die Menschen in sieben Stämmen — jeder mit einer eigenen Wahrheit, keiner mit der ganzen. In einer einzigen Nacht kommen sie zusammen, und ein gemeinsames Schicksal liegt in ihren Händen.</p>
+    <p>An diesem Abend bist du einer von ihnen. Du gehörst zu einem Stamm, trägst eine Rolle mit eigenen Zielen, verhandelst, ermittelst, schließt Bündnisse — und entscheidest mit, wie die Nacht endet. Kein Zuschauen: Du bewegst dich frei durch die Räume, sprichst mit wem du willst, und was ihr gemeinsam tut, verändert den Ausgang.</p>
+    <h2>Ein kurzer Blick zurück</h2>
+    <div class="tl">
+      <p class="label"><b>2043 · Die Schwelle</b>Die vernetzte Welt beginnt zu verstummen; das Vertrauen zerfällt.</p>
+      <p class="label"><b>2092 · Der Fall der Netze</b>Das letzte große Netz fällt. Was bleibt, ist Glut — und wer sie hütet, überlebt.</p>
+      <p class="label"><b>2117 · Die Stämme</b>Aus den Resten formen sich sieben Stämme, jeder mit einer eigenen Antwort auf die Frage: Was rettet uns?</p>
+      <p class="label"><b>2147 · Die lange Nacht</b>Die sieben treffen sich wieder — und müssen gemeinsam eine Entscheidung treffen, die keiner allein tragen kann.</p>
+    </div>
+    <blockquote>Getrennt sind wir Splitter. Zusammen ein Schlüssel.</blockquote>
+    <p class="lead" style="margin-top:20px">Die ganze Vorgeschichte kannst du oben unter „Der Roman“ in Ruhe lesen.</p>
+  </section>
+
+  <!-- DIE STÄMME -->
+  <section class="view" id="v-staemme">
+    <p class="eyebrow">Die sieben Stämme</p>
+    <h1>Wo gehörst du hin?</h1>
+    <p class="lead">Jeder Stamm spielt sich anders. Der Überblick hilft dir, bei der Anmeldung deine Wünsche zu setzen — die endgültige Rolle teilt dir die Spielleitung zu.</p>
+    <div class="tribes" id="tribes"></div>
+  </section>
+
+  <!-- DER ABEND -->
+  <section class="view" id="v-ablauf">
+    <p class="eyebrow">Der Abend</p>
+    <h1>Was dich erwartet</h1>
+    <p class="lead">Ein immersiver Krimi-Dinner-Abend in der Welt von Thalvaràn. Drama mit Humor, gutes Essen, und eine Geschichte, die ihr gemeinsam schreibt.</p>
+    <div class="infogrid">
+      <div class="info"><span class="il">Datum</span><div class="iv">Noch festzulegen</div><div class="ix">Beginn am frühen Abend, Dauer ca. 4–5 Stunden.</div></div>
+      <div class="info"><span class="il">Ort</span><div class="iv">Mehrere Räume</div><div class="ix">Du bewegst dich frei — die Handlung verteilt sich über das ganze Haus.</div></div>
+      <div class="info"><span class="il">Gäste</span><div class="iv">35 Rollen</div><div class="ix">Sieben Stämme mit je eigenen Zielen und Fähigkeiten.</div></div>
+      <div class="info"><span class="il">Verpflegung</span><div class="iv">Freies Buffet</div><div class="ix">Der Abend gliedert sich in mehrere Gänge.</div></div>
+      <div class="info"><span class="il">Kostüm</span><div class="iv">Erwünscht</div><div class="ix">Deine Rolle bekommst du rund zwei Wochen vorher — Zeit zum Ausstatten.</div></div>
+      <div class="info"><span class="il">Ton</span><div class="iv">Drama &amp; Humor</div><div class="ix">Ernst genug zum Mitfiebern, leicht genug zum Lachen.</div></div>
+    </div>
+    <p>Im Saal läuft über den Abend eine Anzeige, die zeigt, wie es um das gemeinsame Schicksal Thalvaràns steht. Was daraus wird, bestimmt ihr — durch Verhandlung, Ermittlung und die Entscheidungen, die ihr gemeinsam trefft.</p>
+    <p>Und im Zentrum des Abends steht ein gemeinsames Werk: In dieser einen Nacht entsteht aus den überlieferten Sätzen der sieben Stämme der <b>Kodex von Thalvaràn</b>. Welche Worte hineinkommen — und welche draussen bleiben —, wird am Tisch ausgehandelt. Jeder Stamm muss sich darin wiederfinden können; keiner darf sich verleugnen müssen.</p>
+    <h2>Häufige Fragen</h2>
+    <details class="faq"><summary>Brauche ich Erfahrung mit Rollenspiel?</summary><div class="fb">Nein. Deine Rolle erklärt dir alles, was du wissen musst. Du kannst so viel oder so wenig spielen, wie du magst.</div></details>
+    <details class="faq"><summary>Wie bekomme ich meine Rolle?</summary><div class="fb">Nach der Anmeldung teilt dir die Spielleitung Stamm und Funktion zu. Rund zwei Wochen vorher erhältst du deine Rolle mit allem, was du brauchst.</div></details>
+    <details class="faq"><summary>Muss ich die ganze Zeit „in der Rolle“ bleiben?</summary><div class="fb">Es gibt Pausen am Buffet, und ein Wort an die Spielleitung genügt, wenn du kurz heraus möchtest. Dein Wohlbefinden geht vor.</div></details>
+    <details class="faq"><summary>Kann ich mit Freunden zusammen spielen?</summary><div class="fb">Sag es uns im Anmeldeformular. Wir versuchen, Wünsche zu berücksichtigen — versprechen können wir es der Dramaturgie wegen nicht immer.</div></details>
+  </section>
+
+  <!-- ANMELDUNG -->
+  <section class="view" id="v-anmeldung">
+    <p class="eyebrow">Anmeldung</p>
+    <h1>Melde dich für die Nacht an</h1>
+    <p class="lead">Sag uns, wer du am liebsten wärst. Aus deinen Antworten leiten wir Stamm und Funktion ab — die endgültige Rolle vergibt die Spielleitung und schickt sie dir rund zwei Wochen vorher.</p>
+
+    <div class="result" id="annResult"></div>
+    <div class="confirm" id="annConfirm"></div>
+
+    <div class="q">
+      <p class="ql">Wie heißt du?</p>
+      <p class="qh">Für deine Einladung und die spätere Rolle.</p>
+      <div class="field"><div class="two"><input id="annName" placeholder="Name"><input id="annMail" placeholder="E-Mail"></div></div>
+    </div>
+
+    <div class="q" data-q="rat">
+      <p class="ql">Im Rat willst du vor allem …</p><p class="qh">Wie stehst du zu Macht und Aufmerksamkeit?</p>
+      <div class="opts">
+        <button data-v="fuehren">vorne stehen &amp; führen</button>
+        <button data-v="vermitteln">vermitteln</button>
+        <button data-v="hinterfragen">hinterfragen</button>
+        <button data-v="hintergrund">im Hintergrund wirken</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="geheim">
+      <p class="ql">Geheimnisse …</p><p class="qh">Wie viel verdeckte Aufgabe darf es sein?</p>
+      <div class="opts">
+        <button data-v="liebe">liebe ich</button>
+        <button data-v="trage">kann ich tragen</button>
+        <button data-v="klein">nur kleine</button>
+        <button data-v="offen">lieber offen spielen</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="bluff">
+      <p class="ql">Bluffen &amp; Täuschen …</p><p class="qh">Wie wohl fühlst du dich mit Intrige?</p>
+      <div class="opts">
+        <button data-v="spiel">ist mein Spiel</button>
+        <button data-v="noetig">wenn nötig</button>
+        <button data-v="ungern">ungern</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="konflikt">
+      <p class="ql">Bei offenem Konflikt …</p><p class="qh">Vorwürfe, Streit, große Szenen.</p>
+      <div class="opts">
+        <button data-v="voran">gehe ich voran</button>
+        <button data-v="mit">halte ich mit der Gruppe</button>
+        <button data-v="meide">meide ich sie lieber</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="auftritt">
+      <p class="ql">Kostüm &amp; Auftritt …</p><p class="qh">Wie sehr magst du die große Geste?</p>
+      <div class="opts">
+        <button data-v="voll">voll dabei</button>
+        <button data-v="dezent">dezent</button>
+        <button data-v="minimal">minimal</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="erfahrung">
+      <p class="ql">Erfahrung mit solchen Abenden …</p><p class="qh">Ehrlich, ohne Wertung — hilft nur der Zuteilung.</p>
+      <div class="opts">
+        <button data-v="viel">viel</button>
+        <button data-v="etwas">etwas</button>
+        <button data-v="keine">keine</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="sonder">
+      <p class="ql">Eine tragende Sonderrolle …</p><p class="qh">Mehr Verantwortung und etwas Vorbereitung — dafür im Zentrum des Abends.</p>
+      <div class="opts">
+        <button data-v="ja">ja, gern</button>
+        <button data-v="evtl">vielleicht</button>
+        <button data-v="nein">lieber normale Rolle</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="freude" data-multi="1">
+      <p class="ql">Woran hättest du Freude?</p><p class="qh">Mehrfachauswahl möglich.</p>
+      <div class="opts">
+        <button data-v="verdeckt">eine verdeckte Aufgabe mit Geheimnis</button>
+        <button data-v="zentral">eine zentrale, vermittelnde Rolle</button>
+        <button data-v="dramatisch">ein großer dramatischer Moment</button>
+        <button data-v="unauffaellig">lieber unauffällig mitspielen</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="frueh">
+      <p class="ql">Für eine tragende Rolle: etwas früher da &amp; kurzes Vorab-Briefing möglich?</p><p class="qh">Nur relevant, falls du oben „ja/vielleicht“ gewählt hast.</p>
+      <div class="opts">
+        <button data-v="ja">ja</button>
+        <button data-v="nein">nein</button>
+      </div>
+    </div>
+
+    <div class="q" data-q="stamm">
+      <p class="ql">Wunsch-Stamm?</p><p class="qh">Optional. Wir versuchen Wünsche zu erfüllen, garantieren sie aber nicht.</p>
+      <div class="opts" id="stammOpts"></div>
+    </div>
+
+    <div class="q" data-q="funktion">
+      <p class="ql">Wunsch-Funktion?</p><p class="qh">Jeder Stamm hat fünf Archetypen.</p>
+      <div class="opts">
+        <button data-v="aeltester">Ältester</button>
+        <button data-v="stimme">Stimme / Seher</button>
+        <button data-v="skeptiker">Skeptiker</button>
+        <button data-v="lehrling">Lehrling</button>
+        <button data-v="hueter">Geheimnisträger</button>
+        <button data-v="egal">egal</button>
+      </div>
+    </div>
+
+    <div class="q">
+      <p class="ql">Sollten wir noch etwas wissen?</p>
+      <p class="qh">Allergien &amp; Ernährung, Barrierefreiheit, mit wem du spielen möchtest, Themen die du meiden willst.</p>
+      <div class="field"><textarea id="annHinweise" placeholder="Frei lassen, wenn nichts ansteht."></textarea></div>
+    </div>
+
+    <button class="submit" id="annSubmit">Vorschlag berechnen &amp; anmelden</button>
+    <p class="privacy">Deine Angaben werden nur zur Rollenzuteilung und Organisation dieses Abends verwendet und nicht weitergegeben.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  /* HIER die Google-Apps-Script-URL eintragen (siehe Anleitung). Solange leer: nur Vorschau, kein Versand. */
+  var ANMELDUNG_ENDPOINT = "HIER_DEINE_APPS_SCRIPT_URL_EINFUEGEN";
+
+  var STAMM = {
+    ferroniten:{name:"Ferroniten",c:"#7FA0B5"}, vallari:{name:"Vallari",c:"#7E9B6B"},
+    moryen:{name:"Mor\u2019Yen",c:"#9285B0"}, axiomaten:{name:"Axiomaten",c:"#5CB6C2"},
+    rhun:{name:"Klingen von Rh\u00fbn",c:"#C79A5B"}, myrrhiden:{name:"Myrrhiden",c:"#A9B0C4"},
+    solari:{name:"Solari",c:"#D9A441"}
+  };
+  var TRIBES = [
+    {k:"ferroniten", motto:"Was erwacht, lebt \u2014 wenn wir nur zuh\u00f6ren.", wesen:"Bauen, ordnen, im Rat das Wort f\u00fchren. Macher mit Gewicht."},
+    {k:"vallari", motto:"Zuh\u00f6ren, nicht sprechen. Der Boden antwortet.", wesen:"Verbinden, tragen, die Mehrheit halten. Das ruhige R\u00fcckgrat."},
+    {k:"moryen", motto:"Ohne Form kein \u00dcberleben. Schweigen ist St\u00e4rke.", wesen:"Form und Schwelle h\u00fcten. Ordnung, Ritual, Kontrolle \u00fcber \u00dcberg\u00e4nge."},
+    {k:"axiomaten", motto:"Nur was stabil ist, z\u00e4hlt. Finde die Linie im Kreis.", wesen:"Pr\u00fcfen, rechnen, hinterfragen. K\u00fchle K\u00f6pfe, die Muster sehen."},
+    {k:"rhun", motto:"Bewegung ist Leben. Ehre liegt im Weg.", wesen:"Mut, Tempo, klare Kante. Treiber, die Dinge ins Rollen bringen."},
+    {k:"myrrhiden", motto:"Erinnern, was war. Die Wahrheit lebt im Stillen.", wesen:"Bewahren, erinnern, leise wirken. Stille Tiefe abseits des L\u00e4rms."},
+    {k:"solari", motto:"Die Wahrheit \u00fcber alles \u2014 rein wie Licht.", wesen:"Wahrheit, Licht, Vermittlung. Offene Herzen, die Br\u00fccken bauen."}
+  ];
+  var FUNK = {aeltester:"\u00c4ltester", stimme:"Stimme / Seher", skeptiker:"Skeptiker", lehrling:"Lehrling", hueter:"Geheimnistr\u00e4ger", egal:"nach Eignung"};
+
+  /* Stämme rendern */
+  var tribesEl = document.getElementById("tribes");
+  TRIBES.forEach(function(t){
+    var s = STAMM[t.k], el = document.createElement("div");
+    el.className = "tribe"; el.style.setProperty("--tcx", s.c);
+    el.innerHTML = '<h3>'+s.name+'</h3><div class="arch">Stamm</div><div class="motto">\u201e'+t.motto+'\u201c</div><div class="wesen">'+t.wesen+'</div>';
+    tribesEl.appendChild(el);
+  });
+
+  /* Ansicht-Umschaltung */
+  var views = {welt:1, staemme:1, ablauf:1, anmeldung:1};
+  var tabs = document.querySelectorAll("header.sub button");
+  function show(v){
+    Object.keys(views).forEach(function(k){ document.getElementById("v-"+k).classList.toggle("on", k===v); });
+    tabs.forEach(function(b){ b.setAttribute("aria-current", b.dataset.view===v ? "true":"false"); });
+    window.scrollTo(0,0);
+  }
+  tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.dataset.view); location.hash = b.dataset.view; }); });
+  window.showView = show;
+  function fromHash(){
+    var v = (location.hash||"").replace("#","");
+    if(views[v]) show(v);
+  }
+  window.addEventListener("hashchange", fromHash);
+  fromHash();
+
+  /* Stamm-Optionen */
+  var stammOpts = document.getElementById("stammOpts");
+  Object.keys(STAMM).forEach(function(k){ var b=document.createElement("button"); b.dataset.v=k; b.textContent=STAMM[k].name; stammOpts.appendChild(b); });
+  var bs=document.createElement("button"); bs.dataset.v="egal"; bs.textContent="\u00fcberrasch mich"; stammOpts.appendChild(bs);
+
+  /* Antworten sammeln */
+  var answers = {}; var multi = { freude: [] };
+  document.querySelectorAll(".q[data-q]").forEach(function(q){
+    var key = q.dataset.q, isMulti = q.dataset.multi === "1";
+    q.querySelectorAll(".opts button").forEach(function(b){
+      b.addEventListener("click", function(){
+        if(isMulti){
+          var i = multi[key].indexOf(b.dataset.v);
+          if(i>=0){ multi[key].splice(i,1); b.setAttribute("aria-pressed","false"); }
+          else { multi[key].push(b.dataset.v); b.setAttribute("aria-pressed","true"); }
+        } else {
+          q.querySelectorAll(".opts button").forEach(function(x){ x.setAttribute("aria-pressed","false"); });
+          b.setAttribute("aria-pressed","true"); answers[key]=b.dataset.v;
+        }
+      });
+    });
+  });
+
+  /* Beschriftungen für Tabelle/Mail */
+  var LAB = {
+    rat:{fuehren:"vorne stehen & f\u00fchren",vermitteln:"vermitteln",hinterfragen:"hinterfragen",hintergrund:"im Hintergrund wirken"},
+    geheim:{liebe:"liebe ich",trage:"kann ich tragen",klein:"nur kleine",offen:"lieber offen"},
+    bluff:{spiel:"mein Spiel",noetig:"wenn n\u00f6tig",ungern:"ungern"},
+    konflikt:{voran:"geht voran",mit:"h\u00e4lt mit der Gruppe",meide:"meidet Konflikt"},
+    auftritt:{voll:"voll dabei",dezent:"dezent",minimal:"minimal"},
+    erfahrung:{viel:"viel",etwas:"etwas",keine:"keine"},
+    sonder:{ja:"ja, gern",evtl:"vielleicht",nein:"lieber normale Rolle"},
+    freude:{verdeckt:"verdeckte Aufgabe",zentral:"zentrale/vermittelnde Rolle",dramatisch:"gro\u00dfer Moment",unauffaellig:"unauff\u00e4llig"},
+    frueh:{ja:"ja",nein:"nein"}
+  };
+  function lab(q,v){ return (LAB[q] && LAB[q][v]) || v || "\u2014"; }
+  function emailOk(s){ return /.+@.+\..+/.test(s); }
+
+  /* Stamm-Fit */
+  function suggest(){
+    var sc={ferroniten:0,axiomaten:0,myrrhiden:0,moryen:0,rhun:0,solari:0,vallari:0};
+    function add(o){ Object.keys(o).forEach(function(k){ sc[k]+=o[k]; }); }
+    var R={
+      rat:{fuehren:{ferroniten:3,rhun:1},vermitteln:{solari:3,vallari:2},hinterfragen:{axiomaten:3},hintergrund:{myrrhiden:3,moryen:2}},
+      geheim:{liebe:{myrrhiden:3,moryen:2,rhun:1},trage:{moryen:2,axiomaten:1},klein:{vallari:1,solari:1},offen:{ferroniten:2,vallari:1}},
+      bluff:{spiel:{rhun:3,myrrhiden:1},noetig:{axiomaten:1,moryen:1},ungern:{vallari:2,solari:2,ferroniten:1}},
+      konflikt:{voran:{rhun:3,ferroniten:1},mit:{vallari:2,solari:1,ferroniten:1},meide:{myrrhiden:2,moryen:1,axiomaten:1}},
+      auftritt:{voll:{rhun:2,solari:2},dezent:{ferroniten:1,axiomaten:1},minimal:{myrrhiden:2,moryen:1}}
+    };
+    Object.keys(R).forEach(function(q){ if(answers[q] && R[q][answers[q]]) add(R[q][answers[q]]); });
+    if(answers.stamm && answers.stamm!=="egal") sc[answers.stamm]+=4;
+    var best=Object.keys(sc).sort(function(a,b){ return sc[b]-sc[a]; });
+    return best;
+  }
+  function archetype(){
+    if(answers.funktion && answers.funktion!=="egal") return answers.funktion;
+    if(answers.rat==="fuehren") return "aeltester";
+    if(answers.rat==="hinterfragen") return "skeptiker";
+    if(answers.rat==="hintergrund" || answers.geheim==="liebe") return "hueter";
+    if(answers.rat==="vermitteln") return "stimme";
+    return "lehrling";
+  }
+
+  var sending=false;
+  function send(payload, done){
+    if(String(ANMELDUNG_ENDPOINT).indexOf("http")!==0){ done("demo"); return; }
+    fetch(ANMELDUNG_ENDPOINT,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+      .then(function(r){ return r.text(); }).then(function(){ done("sent"); }).catch(function(){ done("error"); });
+  }
+
+  document.getElementById("annSubmit").addEventListener("click", function(){
+    if(sending) return;
+    var btn=this, name=(document.getElementById("annName").value||"").trim(), mail=(document.getElementById("annMail").value||"").trim();
+    var conf=document.getElementById("annConfirm");
+    if(!name || !emailOk(mail)){
+      conf.classList.add("on"); conf.style.borderColor="color-mix(in oklab,var(--blood),var(--frost))";
+      conf.innerHTML='<div class="ch" style="color:var(--blood)">Fast geschafft</div>Bitte trag Name und eine g\u00fcltige E-Mail ein.';
+      document.getElementById("annName").scrollIntoView({behavior:"smooth",block:"center"}); return;
+    }
+    conf.style.borderColor="";
+    var best=suggest(), top=best[0], st=STAMM[top], fk=archetype();
+    document.documentElement.style.setProperty("--tc", st.c);
+    var wesen=(TRIBES.find(function(t){return t.k===top;})||{wesen:""}).wesen;
+    var res=document.getElementById("annResult");
+    res.innerHTML='<span class="rk">Vorschlag der Spielleitung</span><div class="rt">'+st.name+(fk!=="egal"?" \u00b7 "+FUNK[fk]:"")+'</div>'+
+      '<p class="rr">'+wesen+'</p>'+
+      '<p class="rb">Das passt zu deinen Antworten. <b>Die endg\u00fcltige Rolle vergibt die Spielleitung</b> und schickt sie dir rund zwei Wochen vorher.</p>'+
+      '<p class="alts">Auch denkbar: '+STAMM[best[1]].name+" \u00b7 "+STAMM[best[2]].name+'</p>';
+    res.classList.add("on");
+
+    var payload={
+      name:name, email:mail,
+      rat:lab("rat",answers.rat), geheimnisse:lab("geheim",answers.geheim), bluffen:lab("bluff",answers.bluff),
+      konflikt:lab("konflikt",answers.konflikt), auftritt:lab("auftritt",answers.auftritt),
+      erfahrung:lab("erfahrung",answers.erfahrung), sonderrolle:lab("sonder",answers.sonder),
+      freude:(multi.freude||[]).map(function(v){return lab("freude",v);}).join(", ") || "\u2014",
+      frueh_briefing:lab("frueh",answers.frueh),
+      wunsch_stamm: answers.stamm ? (answers.stamm==="egal"?"\u00fcberrasch mich":(STAMM[answers.stamm]?STAMM[answers.stamm].name:answers.stamm)) : "\u2014",
+      wunsch_funktion: (answers.funktion && answers.funktion!=="egal") ? FUNK[answers.funktion] : "egal",
+      vorschlag_stamm: st.name,
+      vorschlag_funktion: fk!=="egal" ? FUNK[fk] : "nach Eignung",
+      vorschlag_alternativen: STAMM[best[1]].name+" / "+STAMM[best[2]].name,
+      hinweise:(document.getElementById("annHinweise").value||"").trim() || "\u2014",
+      quelle:"Thalvar\u00e0n Website"
+    };
+
+    sending=true; btn.disabled=true; btn.textContent="Wird gesendet \u2026";
+    conf.classList.add("on"); conf.innerHTML='<div class="ch">Wird \u00fcbermittelt \u2026</div>Einen Moment.';
+    send(payload, function(status){
+      sending=false; btn.disabled=false; btn.textContent="Vorschlag berechnen & anmelden";
+      if(status==="sent") conf.innerHTML='<div class="ch">Anmeldung gesendet</div>Danke, '+name+'. Deine Anmeldung ist bei der Spielleitung eingegangen. Du bekommst deine Rolle rund zwei Wochen vorher.';
+      else if(status==="demo") conf.innerHTML='<div class="ch">Vorschau-Modus</div>Danke, '+name+'. Sobald das Formular scharf geschaltet ist, geht deine Anmeldung automatisch an die Spielleitung.';
+      else { conf.style.borderColor="color-mix(in oklab,var(--blood),var(--frost))"; conf.innerHTML='<div class="ch" style="color:var(--blood)">Senden hat nicht geklappt</div>Bitte versuch es gleich noch einmal.'; }
+      res.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  });
+})();
+</script>
+</body>
+</html>
