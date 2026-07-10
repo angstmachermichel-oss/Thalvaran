@@ -1,83 +1,205 @@
 <!DOCTYPE html>
 <html lang="de">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thalvaràn — Die Lange Nacht</title>
-  <style>
-    :root{
-      --ink:#080d10; --frost:#16242a; --frost-2:#1d2f35;
-      --bone:#e9e3d6; --bone-dim:#a4aba8; --aurora:#63c6a3;
-      --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
-      --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
-      --bar:54px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%;background:var(--ink);color:var(--bone);font-family:var(--serif);overflow:hidden}
-    header.bar{height:var(--bar);position:fixed;top:0;left:0;right:0;z-index:10;
-               background:color-mix(in oklab,var(--ink),#000 28%);border-bottom:1px solid var(--frost);
-               backdrop-filter:blur(8px);display:flex;align-items:center;gap:14px;padding:0 18px;flex-wrap:wrap}
-    .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
-    .sigil{width:28px;height:28px;flex:0 0 auto}
-    .sigil svg{width:100%;height:100%}
-    .sigil .r{fill:none;stroke:var(--aurora);stroke-width:1.6}
-    .sigil .c{fill:var(--aurora)}
-    .brand .mk{font-size:16px;letter-spacing:.05em;white-space:nowrap}
-    .brand .sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--bone-dim);display:block;margin-top:1px;white-space:nowrap}
-    .nav-menu{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .nav-btn{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
-             color:var(--bone-dim);background:var(--frost-2);border:1px solid var(--frost-2);border-radius:4px;
-             padding:6px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
-    .nav-btn:hover{color:var(--bone)}
-    .nav-btn.active{color:#08110d;background:var(--aurora);border-color:var(--aurora)}
-    .nav-btn:focus{color:#08110d;background:var(--aurora);border-color:var(--aurora);outline:none}
-    .frames{position:fixed;top:var(--bar);left:0;right:0;bottom:0}
-    iframe.frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--ink)}
-    iframe.frame.on{display:block}
-    </style>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Thalvaràn — Die Lange Nacht</title>
+    <style>
+          :root {
+                  --ink: #080d10;
+                  --frost: #16242a;
+                  --frost-2: #1d2f35;
+                  --bone: #e9e3d6;
+                  --bone-dim: #a4aba8;
+                  --aurora: #63c6a3;
+                  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+                  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+                  --bar: 54px;
+          }
+
+          * {
+                  box-sizing: border-box;
+          }
+
+          html, body {
+                  margin: 0;
+                  height: 100%;
+                  background: var(--ink);
+                  color: var(--bone);
+                  font-family: var(--serif);
+                  overflow: hidden;
+          }
+
+          header {
+                  height: var(--bar);
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  z-index: 10;
+                  background: color-mix(in oklab, var(--ink), #000 28%);
+                  border-bottom: 1px solid var(--frost);
+                  backdrop-filter: blur(8px);
+                  display: flex;
+                  align-items: center;
+                  gap: 14px;
+                  padding: 0 18px;
+                  flex-wrap: wrap;
+          }
+
+          .brand {
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  margin-right: auto;
+                  min-width: 0;
+          }
+
+          .sigil {
+                  width: 28px;
+                  height: 28px;
+                  flex: 0 0 auto;
+          }
+
+          .sigil svg {
+                  width: 100%;
+                  height: 100%;
+          }
+
+          .sigil .r {
+                  fill: none;
+                  stroke: var(--aurora);
+                  stroke-width: 1.6;
+          }
+
+          .sigil .c {
+                  fill: var(--aurora);
+          }
+
+          .brand .mk {
+                  font-size: 16px;
+                  letter-spacing: 0.05em;
+                  white-space: nowrap;
+          }
+
+          .brand .sub {
+                  font-family: var(--mono);
+                  font-size: 8.5px;
+                  letter-spacing: 0.24em;
+                  text-transform: uppercase;
+                  color: var(--bone-dim);
+                  display: block;
+                  margin-top: 1px;
+                  white-space: nowrap;
+          }
+
+          .nav-menu {
+                  display: flex;
+                  gap: 8px;
+                  align-items: center;
+                  flex-wrap: wrap;
+          }
+
+          .nav-btn {
+                  font-family: var(--mono);
+                  font-size: 11px;
+                  letter-spacing: 0.07em;
+                  text-transform: uppercase;
+                  color: var(--bone-dim);
+                  background: var(--frost-2);
+                  border: 1px solid var(--frost-2);
+                  border-radius: 4px;
+                  padding: 6px 10px;
+                  cursor: pointer;
+                  transition: 0.2s;
+                  white-space: nowrap;
+          }
+
+          .nav-btn:hover {
+                  color: var(--bone);
+          }
+
+          .nav-btn.active {
+                  color: #08110d;
+                  background: var(--aurora);
+                  border-color: var(--aurora);
+          }
+
+          .nav-btn:focus {
+                  color: #08110d;
+                  background: var(--aurora);
+                  border-color: var(--aurora);
+                  outline: none;
+          }
+
+          .frames {
+                  position: fixed;
+                  top: var(--bar);
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+          }
+
+          iframe {
+                  position: absolute;
+                  inset: 0;
+                  width: 100%;
+                  height: 100%;
+                  border: 0;
+                  display: none;
+                  background: var(--ink);
+          }
+
+          iframe.on {
+                  display: block;
+          }
+        </style>
   </head>
   <body>
-    <header class="bar">
-      <div class="brand">
-        <span class="sigil"><svg viewBox="0 0 28 28"><circle class="r" cx="14" cy="14" r="12"/><circle class="c" cx="14" cy="14" r="3.2"/></svg>svg></span>span>
-        <span><span class="mk">Thalvaràn</span><span class="sub">Die Lange Nacht</span></span>
-      </div>div>
-    <div class="nav-menu">
-    <button class="nav-btn active" data-view="vorgeschichte">Vorgeschichte</button>button>
-    <button class="nav-btn" data-view="informationen">Informationen</button>button>
-    <button class="nav-btn" data-view="anmeldung">Anmeldung</button>button>
-    <button class="nav-btn" data-view="spielzugang">Spielzugang</button>button>
+      <header>
+            <div class="brand">
+                    <span class="sigil"><svg viewBox="0 0 28 28"><circle class="r" cx="14" cy="14" r="12"/><circle class="c" cx="14" cy="14" r="3.2"/></svg>svg></span>span>
+                    <span><span class="mk">Thalvaràn</span><span class="sub">Die Lange Nacht</span></span>
+            </div>div>
+          <div class="nav-menu">
+                <button class="nav-btn active" data-view="vorgeschichte">Vorgeschichte</button>button>
+                <button class="nav-btn" data-view="informationen">Informationen</button>button>
+                <button class="nav-btn" data-view="anmeldung">Anmeldung</button>button>
+                <button class="nav-btn" data-view="spielzugang">Spielzugang</button>button>
+          </div>div>
+      </header>
+    
+    <div class="frames">
+        <iframe id="f-vorgeschichte" class="on" title="Vorgeschichte" src="roman-final.html"></iframe>iframe>
+        <iframe id="f-informationen" title="Informationen" src="abend-informationen.html"></iframe>iframe>
+        <iframe id="f-anmeldung" title="Anmeldung" src="abend-anmeldung.html"></iframe>iframe>
+        <iframe id="f-spielzugang" title="Spielzugang" src="thalvaran-kodex-app.html"></iframe>iframe>
     </div>div>
-    </header>header>
-  <div class="frames">
-  <iframe id="f-vorgeschichte" class="frame on" title="Vorgeschichte" src="roman-final.html"></iframe>iframe>
-  <iframe id="f-informationen" class="frame" title="Informationen" src="Thalvaran-Spielerzugang.html"></iframe>iframe>
-  <iframe id="f-anmeldung" class="frame" title="Anmeldung" src="Thalvaran-Spielerzugang.html"></iframe>iframe>
-  <iframe id="f-spielzugang" class="frame" title="Spielzugang" src="thalvaran-kodex-app.html"></iframe>iframe>
-  </div>div>
-  <script>
-    const navBtns = document.querySelectorAll('.nav-btn');
-    const frames = {
-        vorgeschichte: document.getElementById('f-vorgeschichte'),
-        informationen: document.getElementById('f-informationen'),
-        anmeldung: document.getElementById('f-anmeldung'),
-        spielzugang: document.getElementById('f-spielzugang')
-    };
+    
+    <script>
+          const navBtns = document.querySelectorAll('.nav-btn');
+          const frames = {
+                  vorgeschichte: document.getElementById('f-vorgeschichte'),
+                  informationen: document.getElementById('f-informationen'),
+                  anmeldung: document.getElementById('f-anmeldung'),
+                  spielzugang: document.getElementById('f-spielzugang')
+          };
 
-    function switchTo(view) {
-        Object.values(frames).forEach(f => f.classList.remove('on'));
-        navBtns.forEach(btn => btn.classList.remove('active'));
-        frames[view].classList.add('on');
-        document.querySelector('[data-view="' + view + '"]').classList.add('active');
-    }
+          function switchTo(view) {
+                  Object.values(frames).forEach(f => f.classList.remove('on'));
+                  navBtns.forEach(btn => btn.classList.remove('active'));
+                  frames[view].classList.add('on');
+                  document.querySelector('[data-view="' + view + '"]').classList.add('active');
+          }
 
-    navBtns.forEach(btn => {
-        btn.addEventListener('click', () => switchTo(btn.dataset.view));
-    });
-  </script>
+          navBtns.forEach(btn => {
+                  btn.addEventListener('click', () => switchTo(btn.dataset.view));
+          });
+    </script>
   </body>
 </html>html>
-  </script></span>
+    </script></span>
+      </header>
   </body>
-  </style></title>
+    </style></title>
   </head>
