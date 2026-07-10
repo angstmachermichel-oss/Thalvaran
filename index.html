@@ -2,12 +2,73 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0;url=roman-final.html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thalvaràn — Die Lange Nacht</title>
+  <style>
+    :root{
+      --ink:#080d10; --frost:#16242a; --frost-2:#1d2f35;
+      --bone:#e9e3d6; --bone-dim:#a4aba8; --aurora:#63c6a3;
+      --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+      --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+      --bar:54px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--ink);color:var(--bone);font-family:var(--serif);overflow:hidden}
+    header.bar{height:var(--bar);position:fixed;top:0;left:0;right:0;z-index:10;
+               background:color-mix(in oklab,var(--ink),#000 28%);border-bottom:1px solid var(--frost);
+               backdrop-filter:blur(8px);display:flex;align-items:center;gap:14px;padding:0 18px}
+    .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+    .sigil{width:28px;height:28px;flex:0 0 auto}
+    .sigil svg{width:100%;height:100%}
+    .sigil .r{fill:none;stroke:var(--aurora);stroke-width:1.6}
+    .sigil .c{fill:var(--aurora)}
+    .brand .mk{font-size:16px;letter-spacing:.05em;white-space:nowrap}
+    .brand .sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--bone-dim);display:block;margin-top:1px;white-space:nowrap}
+    nav{display:flex;gap:4px}
+    nav button{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+               color:var(--bone-dim);background:transparent;border:1px solid var(--frost-2);border-radius:20px;
+               padding:8px 14px;cursor:pointer;transition:.2s;white-space:nowrap}
+    nav button:hover{color:var(--bone)}
+    nav button[aria-current="true"]{color:#08110d;background:var(--aurora);border-color:var(--aurora)}
+    @media (max-width:560px){
+      .brand .sub{display:none}
+      nav button{padding:8px 11px;font-size:10px}
+    }
+    .frames{position:fixed;top:var(--bar);left:0;right:0;bottom:0}
+    iframe.frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--ink)}
+    iframe.frame.on{display:block}
+    </style>
   </head>
-<body>
-  <p>Weitergeleitet zu <a href="roman-final.html">Thalvaràn</a>a>...</p>
-</body>
-</html>html></p>
-</body></title>
+  <body>
+    <header class="bar">
+      <div class="brand">
+        <span class="sigil"><svg viewBox="0 0 28 28"><circle class="r" cx="14" cy="14" r="12"/><circle class="c" cx="14" cy="14" r="3.2"/></svg>svg></span>span>
+        <span><span class="mk">Thalvaràn</span><span class="sub">Die Lange Nacht</span></span>
+      </div>div>
+    <nav aria-label="Ansicht">
+    <button id="t-roman" aria-current="true">Der Roman</button>button>
+    <button id="t-bibel" aria-current="false">Der Abend &amp; Anmeldung</button>button>
+    </nav>nav>
+    </header>header>
+  <div class="frames">
+  <iframe id="f-roman" class="frame on" title="Der Roman" src="roman-final.html"></iframe>iframe>
+  <iframe id="f-bibel" class="frame" title="Der Abend &amp; Anmeldung" src="Thalvaran-Spielerzugang.html"></iframe>iframe>
+  </div>div>
+  <script>
+    const buttons = {roman: document.getElementById('t-roman'), bibel: document.getElementById('t-bibel')};
+    const frames = {roman: document.getElementById('f-roman'), bibel: document.getElementById('f-bibel')};
+    function switchTo(view) {
+        Object.values(buttons).forEach(b => b.setAttribute('aria-current', 'false'));
+        Object.values(frames).forEach(f => f.classList.remove('on'));
+        buttons[view].setAttribute('aria-current', 'true');
+        frames[view].classList.add('on');
+    }
+    buttons.roman.addEventListener('click', () => switchTo('roman'));
+    buttons.bibel.addEventListener('click', () => switchTo('bibel'));
+  </script>
+  </body>
+</html>html>
+  </script></span>
+  </body>
+  </style></title>
   </head>
