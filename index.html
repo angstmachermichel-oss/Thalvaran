@@ -41,17 +41,26 @@
         <span><span class="mk">Thalvaràn</span><span class="sub">Die Lange Nacht</span></span>
       </div>div>
     <select id="view-select">
-    <option value="roman">Der Roman</option>option>
-    <option value="bibel">Der Abend & Anmeldung</option>option>
+    <option value="vorgeschichte">Vorgeschichte</option>option>
+    <option value="informationen">Informationen</option>option>
+    <option value="anmeldung">Anmeldung</option>option>
+    <option value="spielzugang">Spielzugang</option>option>
     </select>select>
     </header>header>
   <div class="frames">
-  <iframe id="f-roman" class="frame on" title="Der Roman" src="roman-final.html"></iframe>iframe>
-  <iframe id="f-bibel" class="frame" title="Der Abend &amp; Anmeldung" src="Thalvaran-Spielerzugang.html"></iframe>iframe>
+  <iframe id="f-vorgeschichte" class="frame on" title="Vorgeschichte" src="roman-final.html"></iframe>iframe>
+  <iframe id="f-informationen" class="frame" title="Informationen" src="Thalvaran-Spielerzugang.html"></iframe>iframe>
+  <iframe id="f-anmeldung" class="frame" title="Anmeldung" src="Thalvaran-Spielerzugang.html"></iframe>iframe>
+  <iframe id="f-spielzugang" class="frame" title="Spielzugang" src="thalvaran-kodex-app.html"></iframe>iframe>
   </div>div>
   <script>
     const select = document.getElementById('view-select');
-    const frames = {roman: document.getElementById('f-roman'), bibel: document.getElementById('f-bibel')};
+    const frames = {
+        vorgeschichte: document.getElementById('f-vorgeschichte'),
+        informationen: document.getElementById('f-informationen'),
+        anmeldung: document.getElementById('f-anmeldung'),
+        spielzugang: document.getElementById('f-spielzugang')
+    };
     function switchTo(view) {
         Object.values(frames).forEach(f => f.classList.remove('on'));
         frames[view].classList.add('on');
